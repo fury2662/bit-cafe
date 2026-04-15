@@ -657,6 +657,17 @@ window.returnCup=function(){
   localStorage.setItem('bitcafe_returned',ret+1);updateCupStock(allOrders);
 };
 
+// ── 텔레그램 알림 ──
+const TG_TOKEN = '8052031047:AAH-Sg-61w-oTiu407wk62VBTB29dzMEjLQ';
+const TG_CHAT  = '8541660301';
+function sendTelegram(msg){
+  fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:TG_CHAT, text:msg})
+  }).catch(()=>{});
+}
+
 // ── 브라우저 알림 권한 요청 ──
 function requestNotifyPermission(){
   if(!('Notification' in window)) return;
@@ -752,19 +763,23 @@ onSnapshot(q,snapshot=>{
       if(change.type==='added'&&isAdmin){
         showNotify('new-order','새 주문이 들어왔어요! 🔔',`${o.name}님 · ${o.emoji} ${o.menu}`);
         sendBrowserNotify('☕ 새 주문!', `${o.name}님 · ${o.emoji} ${o.menu}`);
+        sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}`);
       }
       if(change.type==='modified'){
         if(prev!=='제조중'&&o.status==='제조중'&&o.name===user){
           showNotify('making','제조를 시작했어요! ☕',`${o.emoji} ${o.menu} 조금만 기다려주세요!`);
           sendBrowserNotify('☕ 제조 시작!', `${o.emoji} ${o.menu} 조금만 기다려주세요!`);
+          sendTelegram(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);
         }
         if(prev!=='완료'&&o.status==='완료'&&o.name===user){
           showNotify('complete','주문이 완료됐어요! 🎉',`${o.emoji} ${o.menu} 가져가세요!`);
           sendBrowserNotify('✅ 주문 완료!', `${o.emoji} ${o.menu} 가져가세요!`);
+          sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요! 가져가세요!`);
         }
         if(prev!=='취소'&&o.status==='취소'&&isAdmin){
           showNotify('cancel','주문이 취소됐어요! ❌',`${o.name}님 · ${o.emoji} ${o.menu}`);
           sendBrowserNotify('❌ 주문 취소', `${o.name}님 · ${o.emoji} ${o.menu}`);
+          sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`);
         }
       }
       prevStatuses[o.firestoreId]=o.status;
