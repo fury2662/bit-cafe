@@ -657,14 +657,13 @@ window.returnCup=function(){
   localStorage.setItem('bitcafe_returned',ret+1);updateCupStock(allOrders);
 };
 
-// ── 텔레그램 알림 ──
-const TG_TOKEN = '8052031047:AAH-Sg-61w-oTiu407wk62VBTB29dzMEjLQ';
-const TG_CHAT  = '8541660301';
-function sendTelegram(msg){
-  fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+// ── 슬랙 알림 ──
+const SLACK_WEBHOOK = 'https://hooks.slack.com/services/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';
+function sendSlack(msg){
+  fetch(SLACK_WEBHOOK, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({chat_id:TG_CHAT, text:msg})
+    body:JSON.stringify({text:msg})
   }).catch(()=>{});
 }
 
@@ -760,14 +759,21 @@ onSnapshot(q,snapshot=>{
     snapshot.docChanges().forEach(change=>{
       const o={firestoreId:change.doc.id,...change.doc.data()};
       const prev=prevStatuses[o.firestoreId];
-      // 텔레그램 알림 (항상 전송 - 로그인 무관)
+      // 슬랙 알림 (항상 전송 - 로그인 무관)
       if(change.type==='added'){
-        sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}`);
+        const msg=`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}`;
+        sendSlack(msg);
       }
       if(change.type==='modified'){
-        if(prev!=='제조중'&&o.status==='제조중') sendTelegram(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);
-        if(prev!=='완료'&&o.status==='완료') sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`);
-        if(prev!=='취소'&&o.status==='취소') sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`);
+        if(prev!=='제조중'&&o.status==='제조중'){
+          sendSlack(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);
+        }
+        if(prev!=='완료'&&o.status==='완료'){
+          sendSlack(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`);
+        }
+        if(prev!=='취소'&&o.status==='취소'){
+          sendSlack(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`);
+        }
       }
 
       // 앱 내 알림 (로그인 상태에 따라)
