@@ -416,10 +416,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div class="cup-mgmt-title">🥤 공용컵 현황</div>
             <div class="cup-mgmt-sub">재고 <strong id="cup-remain">10</strong>개 · 대출 <strong id="cup-out">0</strong>개 · 회수 <strong id="cup-returned">0</strong>개</div>
           </div>
-          <button class="cup-return-btn" onclick="returnCup()">+ 회수</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:6px 10px;">
+              <label style="font-size:11px;color:var(--text-muted);white-space:nowrap;">총 개수</label>
+              <input type="number" id="cup-total-input" min="1" max="100" value="10"
+                style="width:44px;background:none;border:none;font-size:14px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;text-align:center;outline:none;"
+                onchange="setCupTotal(this.value)">
+            </div>
+            <button class="cup-return-btn" onclick="returnCup()">+ 회수</button>
+          </div>
         </div>
         <div class="cup-bar-track"><div class="cup-bar-fill" id="cup-bar" style="width:100%"></div></div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:3px;"><span>0</span><span>초기 재고 10개</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:3px;"><span>0</span><span id="cup-total-label">초기 재고 10개</span></div>
       </div>
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab(this,'orders')">📋 주문 목록</button>
@@ -490,14 +498,25 @@ const app = initializeApp({
 const db = getFirestore(app);
 const ordersCol = collection(db,'orders');
 
-const TOTAL_CUPS = 10;
-const ADMIN_PW   = '1234';
+const ADMIN_PW = '1234';
+let TOTAL_CUPS = parseInt(localStorage.getItem('bitcafe_total_cups') || '10');
 let selectedMenu = null;
 let allOrders    = [];
 let currentFilter = 'all';
 let isFirstLoad  = true;
 let prevStatuses = {};
 let currentUser  = localStorage.getItem('bitcafe_username') || '';
+
+// ── 공용컵 총 개수 설정 ──
+window.setCupTotal = function(val) {
+  const n = Math.max(1, Math.min(100, parseInt(val) || 10));
+  TOTAL_CUPS = n;
+  localStorage.setItem('bitcafe_total_cups', n);
+  document.getElementById('cup-total-input').value = n;
+  const label = document.getElementById('cup-total-label');
+  if (label) label.textContent = `초기 재고 ${n}개`;
+  updateCupStock(allOrders);
+};
 
 // ── PC 판별 ──
 const isPC = () => window.innerWidth >= 1024;
@@ -745,8 +764,19 @@ window.cancelOrder=async function(fid){
 // ── 관리자 로그인 ──
 window.adminLogin=function(){
   const pw=document.getElementById('admin-pw').value;
-  if(pw===ADMIN_PW){document.getElementById('admin-login').style.display='none';document.getElementById('admin-dashboard').style.display='block';renderAdmin();}
-  else{document.getElementById('admin-pw').style.borderColor='#ef4444';setTimeout(()=>{document.getElementById('admin-pw').style.borderColor='';document.getElementById('admin-pw').value='';},1500);}
+  if(pw===ADMIN_PW){
+    document.getElementById('admin-login').style.display='none';
+    document.getElementById('admin-dashboard').style.display='block';
+    // 총 개수 입력칸 초기화
+    const inp=document.getElementById('cup-total-input');
+    if(inp) inp.value=TOTAL_CUPS;
+    const lbl=document.getElementById('cup-total-label');
+    if(lbl) lbl.textContent=`초기 재고 ${TOTAL_CUPS}개`;
+    renderAdmin();
+  } else {
+    document.getElementById('admin-pw').style.borderColor='#ef4444';
+    setTimeout(()=>{document.getElementById('admin-pw').style.borderColor='';document.getElementById('admin-pw').value='';},1500);
+  }
 };
 document.getElementById('admin-pw').addEventListener('keydown',e=>{if(e.key==='Enter')window.adminLogin();});
 window.adminLogout=function(){document.getElementById('admin-login').style.display='block';document.getElementById('admin-dashboard').style.display='none';document.getElementById('admin-pw').value='';};
