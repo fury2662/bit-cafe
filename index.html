@@ -55,12 +55,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   .pc-left .menu-tag{margin-left:0;font-size:9px;padding:1px 4px;}
   .pc-left .section-title{margin-bottom:4px;margin-top:6px;font-size:10px;}
   /* 주문내역/관리자 */
-  #page-history,#page-admin{display:none;}
+  #page-history,#page-admin{display:none!important;}
   #page-history.active,#page-admin.active{display:block!important;flex:1;overflow-y:auto;padding:24px 32px 20px;}
   #page-history .page-header,#page-admin .page-header{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:18px;text-align:left;}
   #page-history .page-header .logo-icon,#page-admin .page-header .logo-icon{font-size:24px;display:inline;margin:0;animation:none;}
   #page-history .page-header h1,#page-admin .page-header h1{font-size:20px;}
   #page-history .page-header p,#page-admin .page-header p{margin:0 0 0 6px;font-size:12px;}
+  #page-order{display:none!important;}
+  #page-order.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto 1fr;flex:1;overflow:hidden;}
 }
 
 /* ── 헤더 ── */
@@ -300,6 +302,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
               <div class="chip" data-group="sweet" onclick="selectChip(this)">설탕 없음</div>
               <div class="chip selected" data-group="sweet" onclick="selectChip(this)">보통</div>
               <div class="chip" data-group="sweet" onclick="selectChip(this)">달게</div>
+              <div class="chip" data-group="sweet" onclick="selectChip(this)">개달게</div>
             </div>
           </div>
           <div class="option-row">
@@ -354,6 +357,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div class="chip" data-group="sweet" onclick="selectChip(this)">설탕 없음</div>
             <div class="chip selected" data-group="sweet" onclick="selectChip(this)">보통</div>
             <div class="chip" data-group="sweet" onclick="selectChip(this)">달게</div>
+            <div class="chip" data-group="sweet" onclick="selectChip(this)">개달게</div>
           </div>
         </div>
         <div class="option-row">
@@ -598,8 +602,17 @@ window.selectChip = function(chip) {
   chip.classList.add('selected');
   updateSummary();
 };
-function getOption(group){const s=document.querySelector(`.chip.selected[data-group="${group}"]`);return s?s.textContent.trim():'';}
-
+function getOption(group){
+  const s=document.querySelector(`.chip.selected[data-group="${group}"]`);
+  if(!s) return '';
+  // cup 칩은 span(재고뱃지) 제외하고 텍스트만
+  if(group==='cup'){
+    const clone=s.cloneNode(true);
+    clone.querySelectorAll('span').forEach(el=>el.remove());
+    return clone.textContent.trim();
+  }
+  return s.textContent.trim();
+}
 // ── 요약 업데이트 ──
 function updateSummary(){
   if(!selectedMenu) return;
