@@ -657,6 +657,23 @@ window.returnCup=function(){
   localStorage.setItem('bitcafe_returned',ret+1);updateCupStock(allOrders);
 };
 
+// ── 브라우저 알림 권한 요청 ──
+function requestNotifyPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+}
+requestNotifyPermission();
+
+function sendBrowserNotify(title, body, icon='☕'){
+  if(!('Notification' in window)) return;
+  if(Notification.permission!=='granted') return;
+  // 페이지가 포커스 상태면 브라우저 알림 안 띄움 (앱 내 알림으로 충분)
+  if(document.visibilityState==='visible') return;
+  new Notification(title, { body, icon: 'https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/2615.png' });
+}
+
 // ── 뱃지 ──
 function showBadge(target){ // 'order' | 'history' | 'admin'
   const badge=document.getElementById('badge-'+target);
@@ -732,11 +749,23 @@ onSnapshot(q,snapshot=>{
     snapshot.docChanges().forEach(change=>{
       const o={firestoreId:change.doc.id,...change.doc.data()};
       const prev=prevStatuses[o.firestoreId];
-      if(change.type==='added'&&isAdmin) showNotify('new-order','새 주문이 들어왔어요! 🔔',`${o.name}님 · ${o.emoji} ${o.menu}`);
+      if(change.type==='added'&&isAdmin){
+        showNotify('new-order','새 주문이 들어왔어요! 🔔',`${o.name}님 · ${o.emoji} ${o.menu}`);
+        sendBrowserNotify('☕ 새 주문!', `${o.name}님 · ${o.emoji} ${o.menu}`);
+      }
       if(change.type==='modified'){
-        if(prev!=='제조중'&&o.status==='제조중'&&o.name===user) showNotify('making','제조를 시작했어요! ☕',`${o.emoji} ${o.menu} 조금만 기다려주세요!`);
-        if(prev!=='완료'&&o.status==='완료'&&o.name===user) showNotify('complete','주문이 완료됐어요! 🎉',`${o.emoji} ${o.menu} 가져가세요!`);
-        if(prev!=='취소'&&o.status==='취소'&&isAdmin) showNotify('cancel','주문이 취소됐어요! ❌',`${o.name}님 · ${o.emoji} ${o.menu}`);
+        if(prev!=='제조중'&&o.status==='제조중'&&o.name===user){
+          showNotify('making','제조를 시작했어요! ☕',`${o.emoji} ${o.menu} 조금만 기다려주세요!`);
+          sendBrowserNotify('☕ 제조 시작!', `${o.emoji} ${o.menu} 조금만 기다려주세요!`);
+        }
+        if(prev!=='완료'&&o.status==='완료'&&o.name===user){
+          showNotify('complete','주문이 완료됐어요! 🎉',`${o.emoji} ${o.menu} 가져가세요!`);
+          sendBrowserNotify('✅ 주문 완료!', `${o.emoji} ${o.menu} 가져가세요!`);
+        }
+        if(prev!=='취소'&&o.status==='취소'&&isAdmin){
+          showNotify('cancel','주문이 취소됐어요! ❌',`${o.name}님 · ${o.emoji} ${o.menu}`);
+          sendBrowserNotify('❌ 주문 취소', `${o.name}님 · ${o.emoji} ${o.menu}`);
+        }
       }
       prevStatuses[o.firestoreId]=o.status;
     });
