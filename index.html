@@ -282,6 +282,11 @@
       font-weight: 500;
     }
 
+    .chip.selected #cup-stock-badge {
+      background: rgba(255,255,255,0.25) !important;
+      color: #fff !important;
+    }
+
     /* ── 주문 요약 ── */
     .summary-box {
       background: var(--surface);
@@ -615,6 +620,157 @@
       flex-shrink: 0;
     }
 
+    /* ── 공용컵 관리 카드 ── */
+    .cup-mgmt-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .cup-mgmt-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .cup-mgmt-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 4px;
+    }
+
+    .cup-mgmt-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .cup-return-btn {
+      padding: 7px 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 20px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+
+    .cup-return-btn:hover { opacity: 0.85; }
+    .cup-return-btn:active { transform: scale(0.97); }
+
+    .cup-bar-wrap { }
+
+    .cup-bar-track {
+      background: var(--surface2);
+      border-radius: 6px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .cup-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: var(--accent);
+      transition: width 0.4s ease, background 0.3s;
+    }
+
+    .cup-bar-fill.warn { background: #f59e0b; }
+    .cup-bar-fill.danger { background: #ef4444; }
+
+    /* ── 날짜 필터 ── */
+    .date-filter-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+
+    .date-filter-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 12px;
+    }
+
+    .date-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .date-input-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .date-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .date-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .date-input:focus { border-color: var(--accent); }
+
+    .date-sep {
+      font-size: 14px;
+      color: var(--text-muted);
+      padding-top: 18px;
+      flex-shrink: 0;
+    }
+
+    .date-shortcut-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .date-shortcut {
+      flex: 1;
+      padding: 5px 4px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .date-shortcut:hover { border-color: var(--accent); color: var(--accent); }
+    .date-shortcut.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .date-filter-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
     .admin-order-item {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -826,9 +982,9 @@
       <div class="option-row">
         <div class="option-label">컵 선택</div>
         <div class="option-chips">
-          <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵</div>
-          <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
+          <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-stock-badge" style="font-size:10px;background:rgba(37,99,235,0.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>          <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
         </div>
+        <div id="cup-stock-warn" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
       </div>
     </div>
 
@@ -889,7 +1045,7 @@
     <div id="admin-dashboard" style="display:none;">
 
       <!-- 요약 카드 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
         <div class="stat-card">
           <div class="stat-num" id="stat-total">0</div>
           <div class="stat-label">전체 주문</div>
@@ -901,6 +1057,29 @@
         <div class="stat-card">
           <div class="stat-num" style="color:#10b981;" id="stat-done">0</div>
           <div class="stat-label">완료</div>
+        </div>
+      </div>
+
+      <!-- 공용컵 현황 카드 -->
+      <div class="cup-mgmt-card">
+        <div class="cup-mgmt-row">
+          <div>
+            <div class="cup-mgmt-title">🥤 공용컵 현황</div>
+            <div class="cup-mgmt-sub">
+              재고 <strong id="cup-remain">10</strong>개 ·
+              대출 <strong id="cup-out">0</strong>개 ·
+              회수 <strong id="cup-returned">0</strong>개
+            </div>
+          </div>
+          <button class="cup-return-btn" onclick="returnCup()">+ 회수</button>
+        </div>
+        <div class="cup-bar-wrap">
+          <div class="cup-bar-track">
+            <div class="cup-bar-fill" id="cup-bar" style="width:100%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:3px;">
+            <span>0</span><span>초기 재고 10개</span>
+          </div>
         </div>
       </div>
 
@@ -923,6 +1102,36 @@
 
       <!-- 통계 탭 -->
       <div id="tab-stats" style="display:none;">
+
+        <!-- 날짜 필터 -->
+        <div class="date-filter-card">
+          <div class="date-filter-title">📅 기간 조회</div>
+          <div class="date-filter-row">
+            <div class="date-input-wrap">
+              <label class="date-label">시작일</label>
+              <input type="date" id="stat-date-start" class="date-input">
+            </div>
+            <span class="date-sep">~</span>
+            <div class="date-input-wrap">
+              <label class="date-label">종료일</label>
+              <input type="date" id="stat-date-end" class="date-input">
+            </div>
+          </div>
+          <div class="date-shortcut-row">
+            <button class="date-shortcut" onclick="setDateRange('today')">오늘</button>
+            <button class="date-shortcut" onclick="setDateRange('week')">이번 주</button>
+            <button class="date-shortcut" onclick="setDateRange('month')">이번 달</button>
+            <button class="date-shortcut" onclick="setDateRange('all')">전체</button>
+          </div>
+          <div class="date-filter-bottom">
+            <span id="stat-range-label" style="font-size:12px;color:var(--text-muted);">전체 기간</span>
+            <button class="cup-return-btn" style="padding:6px 14px;font-size:12px;" onclick="renderStats()">조회</button>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <button class="filter-btn danger" onclick="clearStats()">🗑 통계 초기화</button>
+        </div>
 
         <!-- 메뉴별 인기 -->
         <div class="stats-section">
@@ -989,6 +1198,52 @@
   const ADMIN_PW = '1234';
   let currentFilter = 'all';
   let allOrders = [];
+
+  const TOTAL_CUPS = 10;
+
+  // ── 컵 재고 업데이트 ──
+  function updateCupStock(orders) {
+    const usedCups = orders.filter(o => (o.cup || '').includes('공용')).length;
+    const returned = parseInt(localStorage.getItem('bitcafe_returned') || '0');
+    const out = Math.max(0, usedCups - returned);
+    const remain = Math.max(0, TOTAL_CUPS - out);
+    const pct = Math.round(remain / TOTAL_CUPS * 100);
+
+    // 주문 화면 뱃지 업데이트
+    const badge = document.getElementById('cup-stock-badge');
+    const warn  = document.getElementById('cup-stock-warn');
+    if (badge) {
+      badge.textContent = `${remain}개`;
+      badge.style.background = remain <= 2 ? 'rgba(239,68,68,0.12)' : remain <= 4 ? 'rgba(245,158,11,0.12)' : 'rgba(37,99,235,0.12)';
+      badge.style.color = remain <= 2 ? '#ef4444' : remain <= 4 ? '#d97706' : '#2563eb';
+    }
+    if (warn) warn.style.display = remain <= 2 ? 'block' : 'none';
+
+    // 관리자 카드 업데이트
+    const elRemain   = document.getElementById('cup-remain');
+    const elOut      = document.getElementById('cup-out');
+    const elReturned = document.getElementById('cup-returned');
+    const elBar      = document.getElementById('cup-bar');
+    if (elRemain)   elRemain.textContent   = remain;
+    if (elOut)      elOut.textContent      = out;
+    if (elReturned) elReturned.textContent = returned;
+    if (elBar) {
+      elBar.style.width = pct + '%';
+      elBar.className = 'cup-bar-fill' + (remain <= 2 ? ' danger' : remain <= 4 ? ' warn' : '');
+    }
+  }
+
+  // ── 회수 버튼 ──
+  window.returnCup = function() {
+    const usedCups = allOrders.filter(o => (o.cup || '').includes('공용')).length;
+    const returned = parseInt(localStorage.getItem('bitcafe_returned') || '0');
+    if (returned >= usedCups) {
+      alert('회수할 컵이 없어요!\n대출된 컵을 모두 회수했어요.');
+      return;
+    }
+    localStorage.setItem('bitcafe_returned', returned + 1);
+    updateCupStock(allOrders);
+  };
 
   // ── 페이지 이동 ──
   window.showPage = function(page) {
@@ -1119,6 +1374,7 @@
         sweet: getOption('sweet'),
         cup: getOption('cup'),
         time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toISOString().split('T')[0],
         timestamp: Date.now(),
         status: '준비중'
       });
@@ -1198,6 +1454,7 @@
 
     allOrders = newOrders;
     renderHistory();
+    updateCupStock(allOrders);
     if (document.getElementById('page-admin').classList.contains('active') &&
         document.getElementById('admin-dashboard').style.display === 'block') {
       renderAdmin();
@@ -1278,14 +1535,77 @@
     } catch(e) { alert('상태 변경 실패: ' + e.message); }
   };
 
-  // 전체 삭제
+  // 전체 삭제 (주문만 - 통계는 유지)
   window.clearAllOrders = async function() {
-    if (!confirm('모든 주문 내역을 삭제할까요?')) return;
+    if (!confirm('주문 내역을 초기화할까요?\n(통계 데이터는 유지됩니다)')) return;
     try {
+      // 현재 주문들을 통계용으로 먼저 저장
+      saveToStats(allOrders);
       for (const o of allOrders) {
         await deleteDoc(doc(db, 'orders', o.firestoreId));
       }
+      localStorage.setItem('bitcafe_returned', '0');
     } catch(e) { alert('삭제 실패: ' + e.message); }
+  };
+
+  // 통계 누적 저장
+  function saveToStats(orders) {
+    const existing = JSON.parse(localStorage.getItem('bitcafe_stats') || '[]');
+    const merged = [...existing, ...orders.map(o => ({
+      menu: o.menu, cup: o.cup, time: o.time, temp: o.temp,
+      date: o.date || new Date(o.timestamp || Date.now()).toISOString().split('T')[0]
+    }))];
+    localStorage.setItem('bitcafe_stats', JSON.stringify(merged));
+  }
+
+  // ── 날짜 단축 버튼 ──
+  window.setDateRange = function(type) {
+    const today = new Date();
+    const fmt = d => d.toISOString().split('T')[0];
+    let start, end;
+
+    document.querySelectorAll('.date-shortcut').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    if (type === 'today') {
+      start = end = fmt(today);
+      document.getElementById('stat-range-label').textContent = '오늘';
+    } else if (type === 'week') {
+      const day = today.getDay();
+      const mon = new Date(today); mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      start = fmt(mon); end = fmt(sun);
+      document.getElementById('stat-range-label').textContent = '이번 주';
+    } else if (type === 'month') {
+      start = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+      end = fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+      document.getElementById('stat-range-label').textContent = '이번 달';
+    } else {
+      start = ''; end = '';
+      document.getElementById('stat-range-label').textContent = '전체 기간';
+    }
+
+    document.getElementById('stat-date-start').value = start;
+    document.getElementById('stat-date-end').value   = end;
+    renderStats();
+  };
+
+  // 날짜 입력 변경시 라벨 업데이트
+  ['stat-date-start', 'stat-date-end'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => {
+      document.querySelectorAll('.date-shortcut').forEach(b => b.classList.remove('active'));
+      const s = document.getElementById('stat-date-start').value;
+      const e = document.getElementById('stat-date-end').value;
+      document.getElementById('stat-range-label').textContent =
+        s && e ? `${s} ~ ${e}` : s ? `${s} 이후` : e ? `${e} 이전` : '전체 기간';
+    });
+  });
+
+  // 통계 초기화
+  window.clearStats = function() {
+    if (!confirm('통계 데이터를 완전히 초기화할까요?')) return;
+    localStorage.removeItem('bitcafe_stats');
+    renderStats();
   };
 
   function renderAdmin() {
@@ -1319,7 +1639,26 @@
   }
 
   function renderStats() {
-    if (allOrders.length === 0) {
+    // 현재 주문 + 누적 통계 합산
+    const saved = JSON.parse(localStorage.getItem('bitcafe_stats') || '[]');
+    let statsData = [...saved, ...allOrders.map(o => ({
+      menu: o.menu, cup: o.cup, time: o.time, temp: o.temp,
+      date: o.date || new Date(o.timestamp || Date.now()).toISOString().split('T')[0]
+    }))];
+
+    // ── 날짜 필터링 ──
+    const startVal = document.getElementById('stat-date-start')?.value;
+    const endVal   = document.getElementById('stat-date-end')?.value;
+    if (startVal || endVal) {
+      statsData = statsData.filter(o => {
+        if (!o.date) return true;
+        if (startVal && o.date < startVal) return false;
+        if (endVal   && o.date > endVal)   return false;
+        return true;
+      });
+    }
+
+    if (statsData.length === 0) {
       ['chart-menu','chart-time','chart-cup'].forEach(id => {
         document.getElementById(id).innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">주문 데이터가 없어요</div>`;
       });
@@ -1328,7 +1667,7 @@
 
     // ── 1. 메뉴별 주문 수 ──
     const menuCount = {};
-    allOrders.forEach(o => { menuCount[o.menu] = (menuCount[o.menu] || 0) + 1; });
+    statsData.forEach(o => { menuCount[o.menu] = (menuCount[o.menu] || 0) + 1; });
     const menuSorted = Object.entries(menuCount).sort((a,b) => b[1]-a[1]);
     const menuMax = menuSorted[0][1];
     const colors = ['#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe'];
@@ -1345,9 +1684,8 @@
 
     // ── 2. 시간대별 주문 수 ──
     const timeCount = {};
-    allOrders.forEach(o => {
+    statsData.forEach(o => {
       if (!o.time) return;
-      // "오전 09:30" 또는 "오후 02:15" 형식 처리
       let hour = null;
       const match = o.time.match(/(\d+):(\d+)/);
       if (match) {
@@ -1376,8 +1714,8 @@
       `).join('');
 
     // ── 3. 컵 비율 도넛 ──
-    const personal = allOrders.filter(o => (o.cup || '').includes('개인')).length;
-    const shared   = allOrders.filter(o => (o.cup || '').includes('공용')).length;
+    const personal = statsData.filter(o => (o.cup || '').includes('개인')).length;
+    const shared   = statsData.filter(o => (o.cup || '').includes('공용')).length;
     const total    = personal + shared || 1;
     const pPct = Math.round(personal / total * 100);
     const sPct = 100 - pPct;
