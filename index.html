@@ -502,7 +502,9 @@ const app = initializeApp({
 const db = getFirestore(app);
 const ordersCol = collection(db,'orders');
 
-const ADMIN_PW = '1234';
+const ADMIN_PW       = '1234';
+const ADMIN_PW_SUPER = '9876';
+let isSuper = false;
 let TOTAL_CUPS = parseInt(localStorage.getItem('bitcafe_total_cups') || '10');
 let selectedMenu = null;
 let allOrders    = [];
@@ -650,7 +652,8 @@ function updateCupStock(orders){
 window.returnCup=function(){
   const used=allOrders.filter(o=>(o.cup||'').includes('공용')).length;
   const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
-  if(ret>=used){alert('회수할 컵이 없어요!');return;}
+  if(ret>=used){showToast('⚠️ 회수할 컵이 없어요!','#f59e0b');return;}
+  if(ret+1>TOTAL_CUPS){showToast('⚠️ 총 개수를 초과할 수 없어요!','#f59e0b');return;}
   localStorage.setItem('bitcafe_returned',ret+1);updateCupStock(allOrders);
 };
 
@@ -777,9 +780,13 @@ window.cancelOrder=async function(fid){
 // ── 관리자 로그인 ──
 window.adminLogin=function(){
   const pw=document.getElementById('admin-pw').value;
-  if(pw===ADMIN_PW){
+  if(pw===ADMIN_PW || pw===ADMIN_PW_SUPER){
+    isSuper = pw===ADMIN_PW_SUPER;
     document.getElementById('admin-login').style.display='none';
     document.getElementById('admin-dashboard').style.display='block';
+    // 통계 탭 표시 여부
+    const statsTab=document.querySelector('.admin-tab[onclick*="stats"]');
+    if(statsTab) statsTab.style.display=isSuper?'':'none';
     // 총 개수 입력칸 초기화
     const inp=document.getElementById('cup-total-input');
     if(inp) inp.value=TOTAL_CUPS;
@@ -792,8 +799,14 @@ window.adminLogin=function(){
   }
 };
 document.getElementById('admin-pw').addEventListener('keydown',e=>{if(e.key==='Enter')window.adminLogin();});
-window.adminLogout=function(){document.getElementById('admin-login').style.display='block';document.getElementById('admin-dashboard').style.display='none';document.getElementById('admin-pw').value='';};
+window.adminLogout=function(){
+  isSuper=false;
+  document.getElementById('admin-login').style.display='block';
+  document.getElementById('admin-dashboard').style.display='none';
+  document.getElementById('admin-pw').value='';
+};
 window.switchAdminTab=function(btn,tab){
+  if(tab==='stats'&&!isSuper) return;
   document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('tab-orders').style.display=tab==='orders'?'block':'none';
   document.getElementById('tab-stats').style.display=tab==='stats'?'block':'none';
