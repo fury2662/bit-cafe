@@ -588,11 +588,49 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* ── 알림 패널 ── */
+    .notify-panel {
+      position: fixed;
+      bottom: 80px;
+      right: 16px;
+      z-index: 998;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 280px;
+    }
+
+    .notify-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.15);
+      border-left: 4px solid var(--accent);
+      animation: slideInRight 0.3s ease;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .notify-card.complete { border-left-color: #10b981; }
+    .notify-card.new-order { border-left-color: #f59e0b; }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(60px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .notify-icon { font-size: 20px; flex-shrink: 0; }
+    .notify-body { flex: 1; }
+    .notify-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .notify-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
   </style>
 </head>
 <body>
 
 <div id="toast" class="toast">✅ 주문이 완료되었어요!</div>
+<div class="notify-panel" id="notify-panel"></div>
 
 <div class="container">
 
@@ -888,13 +926,60 @@
     }
   };
 
+  // ── 알림 표시 함수 ──
+  function showNotify(type, title, desc) {
+    const panel = document.getElementById('notify-panel');
+    const card = document.createElement('div');
+    card.className = `notify-card ${type}`;
+    const icon = type === 'new-order' ? '🔔' : '✅';
+    card.innerHTML = `<span class="notify-icon">${icon}</span><div class="notify-body"><div class="notify-title">${title}</div><div class="notify-desc">${desc}</div></div>`;
+    panel.appendChild(card);
+    setTimeout(() => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(60px)';
+      card.style.transition = 'all 0.3s';
+      setTimeout(() => card.remove(), 300);
+    }, 4000);
+  }
+
   // ── 실시간 주문 수신 (Firestore onSnapshot) ──
+  let isFirstLoad = true;
+  let prevOrderStatuses = {};
+
   const q = query(ordersCol, orderBy('timestamp', 'desc'));
   onSnapshot(q, (snapshot) => {
-    allOrders = snapshot.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
-    // 내 주문 내역 갱신
+    const newOrders = snapshot.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+
+    if (isFirstLoad) {
+      // 첫 로드 시 현재 상태 저장 (알림 없음)
+      newOrders.forEach(o => { prevOrderStatuses[o.firestoreId] = o.status; });
+      isFirstLoad = false;
+    } else {
+      const isAdmin = document.getElementById('admin-dashboard').style.display === 'block';
+      const user = localStorage.getItem('bitcafe_username') || '';
+
+      snapshot.docChanges().forEach(change => {
+        const o = { firestoreId: change.doc.id, ...change.doc.data() };
+
+        // 관리자: 새 주문 알림
+        if (change.type === 'added' && isAdmin) {
+          showNotify('new-order', '새 주문이 들어왔어요!', `${o.name}님 · ${o.emoji} ${o.menu} (${o.size})`);
+        }
+
+        // 주문자: 완료 알림
+        if (change.type === 'modified') {
+          const prev = prevOrderStatuses[o.firestoreId];
+          if (prev !== '완료' && o.status === '완료' && o.name === user) {
+            showNotify('complete', '주문이 완료됐어요! ☕', `${o.emoji} ${o.menu} 준비가 끝났어요!`);
+          }
+        }
+
+        prevOrderStatuses[o.firestoreId] = o.status;
+      });
+    }
+
+    allOrders = newOrders;
     renderHistory();
-    // 관리자 페이지가 열려있으면 갱신
     if (document.getElementById('page-admin').classList.contains('active') &&
         document.getElementById('admin-dashboard').style.display === 'block') {
       renderAdmin();
