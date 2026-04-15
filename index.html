@@ -625,6 +625,20 @@
     .notify-body { flex: 1; }
     .notify-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
     .notify-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .notify-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 0 0 0 6px;
+      flex-shrink: 0;
+      line-height: 1;
+      align-self: flex-start;
+    }
+    .notify-close:hover { color: var(--text); }
+    .notify-card { cursor: pointer; }
+    .notify-card:hover { box-shadow: 0 4px 24px rgba(37,99,235,0.22); }
   </style>
 </head>
 <body>
@@ -932,14 +946,18 @@
     const card = document.createElement('div');
     card.className = `notify-card ${type}`;
     const icon = type === 'new-order' ? '🔔' : '✅';
-    card.innerHTML = `<span class="notify-icon">${icon}</span><div class="notify-body"><div class="notify-title">${title}</div><div class="notify-desc">${desc}</div></div>`;
+    card.innerHTML = `
+      <span class="notify-icon">${icon}</span>
+      <div class="notify-body">
+        <div class="notify-title">${title}</div>
+        <div class="notify-desc">${desc}</div>
+      </div>
+      <button class="notify-close" onclick="this.closest('.notify-card').remove()">✕</button>
+    `;
+    card.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('notify-close')) card.remove();
+    });
     panel.appendChild(card);
-    setTimeout(() => {
-      card.style.opacity = '0';
-      card.style.transform = 'translateX(60px)';
-      card.style.transition = 'all 0.3s';
-      setTimeout(() => card.remove(), 300);
-    }, 4000);
   }
 
   // ── 실시간 주문 수신 (Firestore onSnapshot) ──
