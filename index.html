@@ -214,6 +214,7 @@
 
     .tag-hot  { background: rgba(224,92,58,0.2); color: #e8835e; }
     .tag-cold { background: rgba(74,154,190,0.2); color: #6bb5d4; }
+    .tag-both { background: rgba(139,92,246,0.12); color: #7c3aed; }
 
     /* ── 옵션 패널 ── */
     .option-panel {
@@ -495,6 +496,125 @@
 
     .filter-btn.danger:hover { background: rgba(239,68,68,0.08); }
 
+    /* ── 관리자 탭 ── */
+    .admin-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .admin-tab {
+      flex: 1;
+      padding: 8px;
+      background: none;
+      border: none;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .admin-tab.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 4px rgba(37,99,235,0.10);
+    }
+
+    /* ── 통계 섹션 ── */
+    .stats-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .stats-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 14px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .bar-label {
+      font-size: 12px;
+      color: var(--text);
+      width: 80px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-track {
+      flex: 1;
+      background: var(--surface2);
+      border-radius: 6px;
+      height: 20px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+    }
+
+    .bar-val {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    /* 컵 도넛 차트 */
+    .cup-chart {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .cup-donut {
+      flex-shrink: 0;
+    }
+
+    .cup-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cup-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .cup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
     .admin-order-item {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -663,59 +783,51 @@
     </div>
 
     <!-- 메뉴 선택 -->
-    <p class="section-title">메뉴 선택</p>
-    <div class="menu-grid">
-      <div class="menu-card hot" data-menu="아메리카노" data-emoji="☕" data-type="hot" onclick="selectMenu(this)">
-        <span class="menu-emoji">☕</span>
-        <span class="menu-name">아메리카노</span>
-        <span class="menu-tag tag-hot">HOT</span>
-      </div>
-      <div class="menu-card cold" data-menu="아이스 아메리카노" data-emoji="🧊" data-type="cold" onclick="selectMenu(this)">
-        <span class="menu-emoji">🧊</span>
-        <span class="menu-name">아이스 아메리카노</span>
-        <span class="menu-tag tag-cold">ICED</span>
-      </div>
-      <div class="menu-card hot" data-menu="라떼" data-emoji="🥛" data-type="hot" onclick="selectMenu(this)">
-        <span class="menu-emoji">🥛</span>
-        <span class="menu-name">라떼</span>
-        <span class="menu-tag tag-hot">HOT</span>
-      </div>
-      <div class="menu-card hot" data-menu="핫초코" data-emoji="🍫" data-type="hot" onclick="selectMenu(this)">
-        <span class="menu-emoji">🍫</span>
-        <span class="menu-name">핫초코</span>
-        <span class="menu-tag tag-hot">HOT</span>
-      </div>
-      <div class="menu-card cold" data-menu="아이스초코" data-emoji="🍦" data-type="cold" onclick="selectMenu(this)">
-        <span class="menu-emoji">🍦</span>
-        <span class="menu-name">아이스초코</span>
-        <span class="menu-tag tag-cold">ICED</span>
-      </div>
-    </div>
+    <p class="section-title">HOT · ICE 선택 가능</p>
+    <div class="menu-grid" id="menu-both"></div>
+
+    <p class="section-title" style="margin-top:16px;">ICE 전용</p>
+    <div class="menu-grid" id="menu-ice"></div>
+
+    <p class="section-title" style="margin-top:16px;">HOT 전용</p>
+    <div class="menu-grid" id="menu-hot"></div>
 
     <!-- 옵션 선택 -->
     <div class="option-panel" id="option-panel">
-      <h3 id="option-title">☕ 아메리카노 옵션</h3>
-      <div class="option-row">
-        <div class="option-label">샷 추가</div>
+      <h3 id="option-title"></h3>
+
+      <!-- HOT/ICE 선택 (both 메뉴만) -->
+      <div class="option-row" id="row-temp" style="display:none;">
+        <div class="option-label">온도</div>
         <div class="option-chips">
-          <div class="chip selected" data-group="shot" onclick="selectChip(this)">기본 (1샷)</div>
+          <div class="chip selected" data-group="temp" onclick="selectChip(this)">🔥 HOT</div>
+          <div class="chip" data-group="temp" onclick="selectChip(this)">🧊 ICE</div>
+        </div>
+      </div>
+
+      <div class="option-row">
+        <div class="option-label">샷</div>
+        <div class="option-chips">
+          <div class="chip selected" data-group="shot" onclick="selectChip(this)">1샷</div>
           <div class="chip" data-group="shot" onclick="selectChip(this)">2샷</div>
           <div class="chip" data-group="shot" onclick="selectChip(this)">3샷</div>
         </div>
       </div>
+
       <div class="option-row">
-        <div class="option-label">당도 조절</div>
+        <div class="option-label">당도</div>
         <div class="option-chips">
           <div class="chip" data-group="sweet" onclick="selectChip(this)">설탕 없음</div>
           <div class="chip selected" data-group="sweet" onclick="selectChip(this)">보통</div>
           <div class="chip" data-group="sweet" onclick="selectChip(this)">달게</div>
         </div>
       </div>
+
       <div class="option-row">
-        <div class="option-label">사이즈</div>
+        <div class="option-label">컵 선택</div>
         <div class="option-chips">
-          <div class="chip selected" data-group="size" onclick="selectChip(this)">미디엄</div>
-          <div class="chip" data-group="size" onclick="selectChip(this)">라지</div>
+          <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵</div>
+          <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
         </div>
       </div>
     </div>
@@ -776,7 +888,7 @@
     <!-- 관리자 대시보드 -->
     <div id="admin-dashboard" style="display:none;">
 
-      <!-- 통계 카드 -->
+      <!-- 요약 카드 -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
         <div class="stat-card">
           <div class="stat-num" id="stat-total">0</div>
@@ -792,16 +904,45 @@
         </div>
       </div>
 
-      <!-- 필터 -->
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
-        <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">전체</button>
-        <button class="filter-btn" data-filter="준비중" onclick="setFilter(this)">준비중</button>
-        <button class="filter-btn" data-filter="완료" onclick="setFilter(this)">완료</button>
-        <button class="filter-btn danger" onclick="clearAllOrders()" style="margin-left:auto;">🗑 초기화</button>
+      <!-- 탭 -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchAdminTab(this,'orders')">📋 주문 목록</button>
+        <button class="admin-tab" onclick="switchAdminTab(this,'stats')">📊 통계</button>
       </div>
 
-      <!-- 주문 목록 -->
-      <div id="admin-order-list"></div>
+      <!-- 주문 목록 탭 -->
+      <div id="tab-orders">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">전체</button>
+          <button class="filter-btn" data-filter="준비중" onclick="setFilter(this)">준비중</button>
+          <button class="filter-btn" data-filter="완료" onclick="setFilter(this)">완료</button>
+          <button class="filter-btn danger" onclick="clearAllOrders()" style="margin-left:auto;">🗑 초기화</button>
+        </div>
+        <div id="admin-order-list"></div>
+      </div>
+
+      <!-- 통계 탭 -->
+      <div id="tab-stats" style="display:none;">
+
+        <!-- 메뉴별 인기 -->
+        <div class="stats-section">
+          <div class="stats-title">🏆 메뉴별 주문 수</div>
+          <div id="chart-menu"></div>
+        </div>
+
+        <!-- 시간대별 -->
+        <div class="stats-section">
+          <div class="stats-title">⏰ 시간대별 주문 수</div>
+          <div id="chart-time"></div>
+        </div>
+
+        <!-- 컵 비율 -->
+        <div class="stats-section">
+          <div class="stats-title">♻️ 컵 사용 비율</div>
+          <div id="chart-cup"></div>
+        </div>
+
+      </div>
 
       <!-- 로그아웃 -->
       <button onclick="adminLogout()" style="width:100%;margin-top:16px;padding:12px;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;">로그아웃</button>
@@ -857,11 +998,68 @@
     document.getElementById('nav-' + page).classList.add('active');
   };
 
+  // ── 메뉴 데이터 ──
+  const MENUS = {
+    both: [
+      { name: '아메리카노',   emoji: '☕' },
+      { name: '카페모카',     emoji: '🍫' },
+      { name: '카페라떼',     emoji: '🥛' },
+      { name: '바닐라라떼',   emoji: '🍦' },
+      { name: '헤이즐넛라떼', emoji: '🌰' },
+      { name: '초코',         emoji: '🍫' },
+      { name: '토피넛라떼',   emoji: '🍬' },
+      { name: '녹차라떼',     emoji: '🍵' },
+    ],
+    ice: [
+      { name: '아이스티',   emoji: '🧊' },
+      { name: '미숫가루',   emoji: '🌾' },
+    ],
+    hot: [
+      { name: '카푸치노',    emoji: '☕' },
+      { name: '유자민트티',  emoji: '🍋' },
+      { name: '페퍼민트티',  emoji: '🌿' },
+    ]
+  };
+
+  function buildMenuGrid() {
+    ['both', 'ice', 'hot'].forEach(type => {
+      const grid = document.getElementById('menu-' + type);
+      grid.innerHTML = MENUS[type].map(m => `
+        <div class="menu-card ${type === 'ice' ? 'cold' : type === 'hot' ? 'hot' : 'both'}"
+             data-menu="${m.name}" data-emoji="${m.emoji}" data-type="${type}"
+             onclick="selectMenu(this)">
+          <span class="menu-emoji">${m.emoji}</span>
+          <span class="menu-name">${m.name}</span>
+          ${type === 'both' ? '<span class="menu-tag tag-both">HOT·ICE</span>' : ''}
+          ${type === 'ice'  ? '<span class="menu-tag tag-cold">ICE</span>' : ''}
+          ${type === 'hot'  ? '<span class="menu-tag tag-hot">HOT</span>' : ''}
+        </div>
+      `).join('');
+    });
+  }
+  buildMenuGrid();
+
   // ── 메뉴 선택 ──
   window.selectMenu = function(card) {
     document.querySelectorAll('.menu-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
-    selectedMenu = { name: card.dataset.menu, emoji: card.dataset.emoji, type: card.dataset.type };
+    const type = card.dataset.type;
+    selectedMenu = { name: card.dataset.menu, emoji: card.dataset.emoji, type };
+
+    // HOT/ICE 옵션 표시 여부
+    const rowTemp = document.getElementById('row-temp');
+    if (type === 'both') {
+      rowTemp.style.display = '';
+    } else {
+      rowTemp.style.display = 'none';
+      // ice/hot 고정
+      document.querySelectorAll(`.chip[data-group="temp"]`).forEach(c => c.classList.remove('selected'));
+      const fixedTemp = type === 'ice' ? '🧊 ICE' : '🔥 HOT';
+      document.querySelectorAll(`.chip[data-group="temp"]`).forEach(c => {
+        if (c.textContent === fixedTemp) c.classList.add('selected');
+      });
+    }
+
     document.getElementById('option-panel').classList.add('visible');
     document.getElementById('option-title').textContent = card.dataset.emoji + ' ' + card.dataset.menu + ' 옵션';
     updateSummary();
@@ -885,7 +1083,8 @@
     document.getElementById('summary-content').classList.add('visible');
     document.getElementById('sum-emoji').textContent = selectedMenu.emoji;
     document.getElementById('sum-name').textContent = selectedMenu.name;
-    document.getElementById('sum-detail').textContent = `${getOption('size')} · ${getOption('shot')} · 당도: ${getOption('sweet')}`;
+    const temp = selectedMenu.type === 'ice' ? '🧊 ICE' : selectedMenu.type === 'hot' ? '🔥 HOT' : (getOption('temp') || '🔥 HOT');
+    document.getElementById('sum-detail').textContent = `${temp} · ${getOption('shot')} · 당도: ${getOption('sweet')} · ${getOption('cup')}`;
     const btn = document.getElementById('order-btn');
     const name = document.getElementById('username').value.trim();
     if (name) { btn.disabled = false; btn.textContent = `${name}님 주문하기 →`; }
@@ -915,9 +1114,10 @@
         name,
         menu: selectedMenu.name,
         emoji: selectedMenu.emoji,
+        temp: selectedMenu.type === 'ice' ? '🧊 ICE' : selectedMenu.type === 'hot' ? '🔥 HOT' : (getOption('temp') || '🔥 HOT'),
         shot: getOption('shot'),
         sweet: getOption('sweet'),
-        size: getOption('size'),
+        cup: getOption('cup'),
         time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
         timestamp: Date.now(),
         status: '준비중'
@@ -1018,7 +1218,7 @@
         <span class="order-item-emoji">${o.emoji}</span>
         <div class="order-item-info">
           <div class="order-item-name">${o.menu}</div>
-          <div class="order-item-detail">${o.size} · ${o.shot} · 당도: ${o.sweet}</div>
+          <div class="order-item-detail">${o.temp || ''} · ${o.shot} · 당도: ${o.sweet} · ${o.cup || ''}</div>
         </div>
         <div style="text-align:right">
           <div class="order-status ${o.status === '완료' ? 'done' : ''}">${o.status}</div>
@@ -1054,6 +1254,14 @@
     document.getElementById('admin-login').style.display = 'block';
     document.getElementById('admin-dashboard').style.display = 'none';
     document.getElementById('admin-pw').value = '';
+  };
+
+  window.switchAdminTab = function(btn, tab) {
+    document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-orders').style.display = tab === 'orders' ? 'block' : 'none';
+    document.getElementById('tab-stats').style.display  = tab === 'stats'  ? 'block' : 'none';
+    if (tab === 'stats') renderStats();
   };
 
   window.setFilter = function(btn) {
@@ -1099,7 +1307,7 @@
           <span style="font-size:26px">${o.emoji}</span>
           <div class="admin-order-info">
             <div class="admin-order-name">${o.name}님 · ${o.menu}</div>
-            <div class="admin-order-detail">${o.size} · ${o.shot} · 당도: ${o.sweet} · ${o.time}</div>
+            <div class="admin-order-detail">${o.temp || ''} · ${o.shot} · 당도: ${o.sweet} · ${o.cup || ''} · ${o.time}</div>
           </div>
         </div>
         <div class="status-toggle">
@@ -1108,6 +1316,96 @@
         </div>
       </div>
     `).join('');
+  }
+
+  function renderStats() {
+    if (allOrders.length === 0) {
+      ['chart-menu','chart-time','chart-cup'].forEach(id => {
+        document.getElementById(id).innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">주문 데이터가 없어요</div>`;
+      });
+      return;
+    }
+
+    // ── 1. 메뉴별 주문 수 ──
+    const menuCount = {};
+    allOrders.forEach(o => { menuCount[o.menu] = (menuCount[o.menu] || 0) + 1; });
+    const menuSorted = Object.entries(menuCount).sort((a,b) => b[1]-a[1]);
+    const menuMax = menuSorted[0][1];
+    const colors = ['#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe'];
+    document.getElementById('chart-menu').innerHTML = menuSorted.map(([name, cnt], i) => `
+      <div class="bar-row">
+        <div class="bar-label" title="${name}">${name}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.round(cnt/menuMax*100)}%;background:${colors[Math.min(i,colors.length-1)]}">
+            <span class="bar-val">${cnt}건</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // ── 2. 시간대별 주문 수 ──
+    const timeCount = {};
+    allOrders.forEach(o => {
+      if (!o.time) return;
+      // "오전 09:30" 또는 "오후 02:15" 형식 처리
+      let hour = null;
+      const match = o.time.match(/(\d+):(\d+)/);
+      if (match) {
+        hour = parseInt(match[1]);
+        if (o.time.includes('오후') && hour !== 12) hour += 12;
+        if (o.time.includes('오전') && hour === 12) hour = 0;
+      }
+      if (hour !== null && !isNaN(hour)) {
+        const slot = `${hour}시`;
+        timeCount[slot] = (timeCount[slot] || 0) + 1;
+      }
+    });
+    const timeSorted = Object.entries(timeCount).sort((a,b) => parseInt(a[0])-parseInt(b[0]));
+    const timeMax = timeSorted.length ? Math.max(...timeSorted.map(e=>e[1])) : 1;
+    document.getElementById('chart-time').innerHTML = timeSorted.length === 0
+      ? `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터 없음</div>`
+      : timeSorted.map(([slot, cnt]) => `
+        <div class="bar-row">
+          <div class="bar-label">${slot}</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${Math.round(cnt/timeMax*100)}%;background:#0ea5e9">
+              <span class="bar-val">${cnt}건</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+    // ── 3. 컵 비율 도넛 ──
+    const personal = allOrders.filter(o => (o.cup || '').includes('개인')).length;
+    const shared   = allOrders.filter(o => (o.cup || '').includes('공용')).length;
+    const total    = personal + shared || 1;
+    const pPct = Math.round(personal / total * 100);
+    const sPct = 100 - pPct;
+    const r = 40, circ = Math.round(2 * Math.PI * r);
+    const pDash = Math.round(pPct / 100 * circ);
+    document.getElementById('chart-cup').innerHTML = `
+      <div class="cup-chart">
+        <svg class="cup-donut" width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="#ddeaff" stroke-width="16"/>
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="#2563eb" stroke-width="16"
+            stroke-dasharray="${pDash} ${circ - pDash}"
+            stroke-dashoffset="${Math.round(circ * 0.25)}"
+            transform="rotate(-90 50 50)" style="transition:stroke-dasharray 0.6s ease"/>
+          <text x="50" y="46" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">${pPct}%</text>
+          <text x="50" y="60" text-anchor="middle" font-size="9" fill="var(--text-muted)">개인컵</text>
+        </svg>
+        <div class="cup-legend">
+          <div class="cup-legend-item">
+            <div class="cup-dot" style="background:#2563eb"></div>
+            <div>♻️ 개인컵 <strong>${personal}건</strong> (${pPct}%)</div>
+          </div>
+          <div class="cup-legend-item">
+            <div class="cup-dot" style="background:#ddeaff;border:1px solid #bdd4f4"></div>
+            <div>🥤 공용컵 <strong>${shared}건</strong> (${sPct}%)</div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 </script>
 </body>
