@@ -51,6 +51,45 @@
       padding: 0 16px 100px;
     }
 
+    /* ── PC에서 폰처럼 보이기 ── */
+    @media (min-width: 600px) {
+      body {
+        display: flex;
+        justify-content: center;
+        background-color: #d8e8ff;
+      }
+
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: #d8e8ff;
+        z-index: -1;
+      }
+
+      .container {
+        width: 480px;
+        min-height: 100vh;
+        background: var(--bg);
+        box-shadow: 0 0 40px rgba(37,99,235,0.15);
+        position: relative;
+      }
+
+      .bottom-nav {
+        width: 480px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .notify-panel {
+        right: calc(50% - 480px/2 + 8px);
+      }
+
+      #toast {
+        left: 50%;
+      }
+    }
+
     /* ── 헤더 ── */
     header {
       padding: 40px 0 24px;
@@ -967,6 +1006,8 @@
           <div class="chip selected" data-group="shot" onclick="selectChip(this)">1샷</div>
           <div class="chip" data-group="shot" onclick="selectChip(this)">2샷</div>
           <div class="chip" data-group="shot" onclick="selectChip(this)">3샷</div>
+          <div class="chip" data-group="shot" onclick="selectChip(this)">4샷</div>
+          <div class="chip" data-group="shot" onclick="selectChip(this)">5샷</div>
         </div>
       </div>
 
