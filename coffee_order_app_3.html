@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>☕ BIT Cafe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eef4ff;
+      --surface: #ffffff;
+      --surface2: #ddeaff;
+      --cream: #1a2f5a;
+      --cream-muted: #4a6a9a;
+      --accent: #2563eb;
+      --accent-light: #3b82f6;
+      --hot: #e05c3a;
+      --cold: #0ea5e9;
+      --text: #1a2f5a;
+      --text-muted: #6a8aaa;
+      --border: #bdd4f4;
+      --radius: 16px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── 배경 텍스처 ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 80% 20%, rgba(37,99,235,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 60% at 10% 80%, rgba(14,165,233,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 16px 100px;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      padding: 40px 0 24px;
+      text-align: center;
+    }
+
+    .logo-icon {
+      font-size: 42px;
+      display: block;
+      margin-bottom: 8px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--cream);
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── 이름 입력 ── */
+    .name-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .name-section label {
+      font-size: 13px;
+      color: var(--cream-muted);
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .name-section input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--cream);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .name-section input:focus {
+      border-color: var(--accent);
+    }
+
+    .name-section input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* ── 섹션 타이틀 ── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── 메뉴 그리드 ── */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .menu-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .menu-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.25s;
+      border-radius: var(--radius);
+    }
+
+    .menu-card.hot::before  { background: radial-gradient(circle at 50% 0%, rgba(224,92,58,0.15), transparent 70%); }
+    .menu-card.cold::before { background: radial-gradient(circle at 50% 0%, rgba(74,154,190,0.15), transparent 70%); }
+
+    .menu-card:hover {
+      transform: translateY(-3px);
+      border-color: #5a4030;
+    }
+
+    .menu-card:hover::before { opacity: 1; }
+
+    .menu-card.selected {
+      border-color: var(--accent);
+      transform: translateY(-3px) scale(1.02);
+      background: var(--surface2);
+    }
+
+    .menu-card.selected::before { opacity: 1; }
+
+    .menu-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .menu-emoji {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .menu-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--cream);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .menu-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+
+    .tag-hot  { background: rgba(224,92,58,0.2); color: #e8835e; }
+    .tag-cold { background: rgba(74,154,190,0.2); color: #6bb5d4; }
+
+    /* ── 옵션 패널 ── */
+    .option-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 28px;
+      display: none;
+      animation: slideDown 0.3s ease;
+    }
+
+    .option-panel.visible { display: block; }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .option-panel h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-light);
+      margin-bottom: 16px;
+    }
+
+    .option-row {
+      margin-bottom: 16px;
+    }
+
+    .option-row:last-child { margin-bottom: 0; }
+
+    .option-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .option-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 6px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--cream-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .chip:hover { border-color: var(--accent); color: var(--cream); }
+
+    .chip.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 500;
+    }
+
+    /* ── 주문 요약 ── */
+    .summary-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+    }
+
+    .summary-empty {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .summary-content {
+      display: none;
+      width: 100%;
+    }
+
+    .summary-content.visible { display: flex; align-items: center; gap: 10px; }
+
+    .summary-emoji { font-size: 24px; }
+
+    .summary-text { flex: 1; }
+
+    .summary-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--cream);
+    }
+
+    .summary-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ── 주문 버튼 ── */
+    .order-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .order-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.2s;
+    }
+
+    .order-btn:hover::after { background: rgba(255,255,255,0.08); }
+    .order-btn:active { transform: scale(0.98); }
+    .order-btn:disabled {
+      background: var(--surface2);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+    .order-btn:disabled::after { display: none; }
+
+    /* ── 하단 탭 ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(240,247,255,0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 12px 8px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.2s;
+    }
+
+    .nav-btn .icon { font-size: 20px; }
+    .nav-btn.active { color: var(--accent-light); }
+
+    /* ── 주문내역 화면 ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .order-list { margin-top: 8px; }
+
+    .order-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .order-item-emoji { font-size: 26px; }
+
+    .order-item-info { flex: 1; }
+
+    .order-item-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--cream);
+    }
+
+    .order-item-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .order-item-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .order-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(245,158,11,0.12);
+      color: #d97706;
+    }
+
+    .order-status.done {
+      background: rgba(16,185,129,0.12);
+      color: #059669;
+    }
+
+    /* ── 관리자 스타일 ── */
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 10px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .filter-btn {
+      padding: 6px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .filter-btn.danger {
+      background: none;
+      border-color: #fca5a5;
+      color: #ef4444;
+    }
+
+    .filter-btn.danger:hover { background: rgba(239,68,68,0.08); }
+
+    .admin-order-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .admin-order-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .admin-order-info { flex: 1; }
+
+    .admin-order-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--cream);
+    }
+
+    .admin-order-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .status-toggle {
+      display: flex;
+      gap: 6px;
+    }
+
+    .status-btn {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all 0.2s;
+      background: var(--surface2);
+      color: var(--text-muted);
+    }
+
+    .status-btn.waiting.active {
+      background: rgba(245,158,11,0.12);
+      border-color: #f59e0b;
+      color: #d97706;
+    }
+
+    .status-btn.done.active {
+      background: rgba(16,185,129,0.12);
+      border-color: #10b981;
+      color: #059669;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .big-icon { font-size: 48px; margin-bottom: 12px; display: block; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── 토스트 메시지 ── */
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 12px 24px;
+      border-radius: 30px;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 999;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── 알림 패널 ── */
+    .notify-panel {
+      position: fixed;
+      bottom: 80px;
+      right: 16px;
+      z-index: 998;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 280px;
+    }
+
+    .notify-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.15);
+      border-left: 4px solid var(--accent);
+      animation: slideInRight 0.3s ease;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .notify-card.complete { border-left-color: #10b981; }
+    .notify-card.new-order { border-left-color: #f59e0b; }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(60px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .notify-icon { font-size: 20px; flex-shrink: 0; }
+    .notify-body { flex: 1; }
+    .notify-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .notify-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+<div id="toast" class="toast">✅ 주문이 완료되었어요!</div>
+<div class="notify-panel" id="notify-panel"></div>
+
+<div class="container">
+
+  <!-- ══ 주문 페이지 ══ -->
+  <div id="page-order" class="page active">
+    <header>
+      <span class="logo-icon">☕</span>
+      <h1>BIT Cafe</h1>
+      <p>오늘도 맛있는 커피 한 잔 🤎</p>
+    </header>
+
+    <!-- 이름 입력 -->
+    <div class="name-section">
+      <label>이름</label>
+      <input type="text" id="username" placeholder="이름을 입력해주세요" maxlength="10">
+    </div>
+
+    <!-- 메뉴 선택 -->
+    <p class="section-title">메뉴 선택</p>
+    <div class="menu-grid">
+      <div class="menu-card hot" data-menu="아메리카노" data-emoji="☕" data-type="hot" onclick="selectMenu(this)">
+        <span class="menu-emoji">☕</span>
+        <span class="menu-name">아메리카노</span>
+        <span class="menu-tag tag-hot">HOT</span>
+      </div>
+      <div class="menu-card cold" data-menu="아이스 아메리카노" data-emoji="🧊" data-type="cold" onclick="selectMenu(this)">
+        <span class="menu-emoji">🧊</span>
+        <span class="menu-name">아이스 아메리카노</span>
+        <span class="menu-tag tag-cold">ICED</span>
+      </div>
+      <div class="menu-card hot" data-menu="라떼" data-emoji="🥛" data-type="hot" onclick="selectMenu(this)">
+        <span class="menu-emoji">🥛</span>
+        <span class="menu-name">라떼</span>
+        <span class="menu-tag tag-hot">HOT</span>
+      </div>
+      <div class="menu-card hot" data-menu="핫초코" data-emoji="🍫" data-type="hot" onclick="selectMenu(this)">
+        <span class="menu-emoji">🍫</span>
+        <span class="menu-name">핫초코</span>
+        <span class="menu-tag tag-hot">HOT</span>
+      </div>
+      <div class="menu-card cold" data-menu="아이스초코" data-emoji="🍦" data-type="cold" onclick="selectMenu(this)">
+        <span class="menu-emoji">🍦</span>
+        <span class="menu-name">아이스초코</span>
+        <span class="menu-tag tag-cold">ICED</span>
+      </div>
+    </div>
+
+    <!-- 옵션 선택 -->
+    <div class="option-panel" id="option-panel">
+      <h3 id="option-title">☕ 아메리카노 옵션</h3>
+      <div class="option-row">
+        <div class="option-label">샷 추가</div>
+        <div class="option-chips">
+          <div class="chip selected" data-group="shot" onclick="selectChip(this)">기본 (1샷)</div>
+          <div class="chip" data-group="shot" onclick="selectChip(this)">2샷</div>
+          <div class="chip" data-group="shot" onclick="selectChip(this)">3샷</div>
+        </div>
+      </div>
+      <div class="option-row">
+        <div class="option-label">당도 조절</div>
+        <div class="option-chips">
+          <div class="chip" data-group="sweet" onclick="selectChip(this)">설탕 없음</div>
+          <div class="chip selected" data-group="sweet" onclick="selectChip(this)">보통</div>
+          <div class="chip" data-group="sweet" onclick="selectChip(this)">달게</div>
+        </div>
+      </div>
+      <div class="option-row">
+        <div class="option-label">사이즈</div>
+        <div class="option-chips">
+          <div class="chip selected" data-group="size" onclick="selectChip(this)">미디엄</div>
+          <div class="chip" data-group="size" onclick="selectChip(this)">라지</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 주문 요약 -->
+    <p class="section-title">주문 요약</p>
+    <div class="summary-box">
+      <div class="summary-empty" id="summary-empty">메뉴를 선택해주세요</div>
+      <div class="summary-content" id="summary-content">
+        <span class="summary-emoji" id="sum-emoji">☕</span>
+        <div class="summary-text">
+          <div class="summary-name" id="sum-name">—</div>
+          <div class="summary-detail" id="sum-detail">—</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="order-btn" id="order-btn" onclick="placeOrder()" disabled>
+      메뉴를 선택해주세요
+    </button>
+  </div>
+
+  <!-- ══ 주문 내역 페이지 ══ -->
+  <div id="page-history" class="page">
+    <header>
+      <span class="logo-icon">📋</span>
+      <h1>주문 내역</h1>
+      <p>오늘 주문한 커피 목록</p>
+    </header>
+
+    <div class="order-list" id="order-list">
+      <div class="empty-state">
+        <span class="big-icon">🫗</span>
+        <p>아직 주문 내역이 없어요<br>커피를 주문해보세요!</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+  <!-- ══ 관리자 페이지 ══ -->
+  <div id="page-admin" class="page">
+    <header>
+      <span class="logo-icon">🔧</span>
+      <h1>관리자</h1>
+      <p>전체 주문 현황</p>
+    </header>
+
+    <!-- 관리자 로그인 -->
+    <div id="admin-login">
+      <div class="name-section" style="margin-bottom:12px;">
+        <label>비밀번호</label>
+        <input type="password" id="admin-pw" placeholder="관리자 비밀번호 입력" maxlength="20">
+      </div>
+      <button class="order-btn" onclick="adminLogin()">로그인</button>
+    </div>
+
+    <!-- 관리자 대시보드 -->
+    <div id="admin-dashboard" style="display:none;">
+
+      <!-- 통계 카드 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-total">0</div>
+          <div class="stat-label">전체 주문</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:#f59e0b;" id="stat-waiting">0</div>
+          <div class="stat-label">준비중</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:#10b981;" id="stat-done">0</div>
+          <div class="stat-label">완료</div>
+        </div>
+      </div>
+
+      <!-- 필터 -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">전체</button>
+        <button class="filter-btn" data-filter="준비중" onclick="setFilter(this)">준비중</button>
+        <button class="filter-btn" data-filter="완료" onclick="setFilter(this)">완료</button>
+        <button class="filter-btn danger" onclick="clearAllOrders()" style="margin-left:auto;">🗑 초기화</button>
+      </div>
+
+      <!-- 주문 목록 -->
+      <div id="admin-order-list"></div>
+
+      <!-- 로그아웃 -->
+      <button onclick="adminLogout()" style="width:100%;margin-top:16px;padding:12px;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;">로그아웃</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 하단 탭 -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-order" onclick="showPage('order')">
+    <span class="icon">☕</span>주문하기
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="showPage('history')">
+    <span class="icon">📋</span>주문 내역
+  </button>
+  <button class="nav-btn" id="nav-admin" onclick="showPage('admin')">
+    <span class="icon">🔧</span>관리자
+  </button>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ── Firebase 설정 ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyAphNv8Gz1Qb2O5jXhnV99hKawmiICR4hA",
+    authDomain: "bitcafe-7cb13.firebaseapp.com",
+    projectId: "bitcafe-7cb13",
+    storageBucket: "bitcafe-7cb13.firebasestorage.app",
+    messagingSenderId: "478032534400",
+    appId: "1:478032534400:web:18f0c0e729b38c307b3f65"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const ordersCol = collection(db, 'orders');
+
+  // ── 현재 사용자 이름 (로컬 저장) ──
+  let currentUser = localStorage.getItem('bitcafe_username') || '';
+  let selectedMenu = null;
+  const ADMIN_PW = '1234';
+  let currentFilter = 'all';
+  let allOrders = [];
+
+  // ── 페이지 이동 ──
+  window.showPage = function(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('nav-' + page).classList.add('active');
+  };
+
+  // ── 메뉴 선택 ──
+  window.selectMenu = function(card) {
+    document.querySelectorAll('.menu-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedMenu = { name: card.dataset.menu, emoji: card.dataset.emoji, type: card.dataset.type };
+    document.getElementById('option-panel').classList.add('visible');
+    document.getElementById('option-title').textContent = card.dataset.emoji + ' ' + card.dataset.menu + ' 옵션';
+    updateSummary();
+  };
+
+  window.selectChip = function(chip) {
+    const group = chip.dataset.group;
+    document.querySelectorAll(`.chip[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    updateSummary();
+  };
+
+  function getOption(group) {
+    const s = document.querySelector(`.chip.selected[data-group="${group}"]`);
+    return s ? s.textContent : '';
+  }
+
+  function updateSummary() {
+    if (!selectedMenu) return;
+    document.getElementById('summary-empty').style.display = 'none';
+    document.getElementById('summary-content').classList.add('visible');
+    document.getElementById('sum-emoji').textContent = selectedMenu.emoji;
+    document.getElementById('sum-name').textContent = selectedMenu.name;
+    document.getElementById('sum-detail').textContent = `${getOption('size')} · ${getOption('shot')} · 당도: ${getOption('sweet')}`;
+    const btn = document.getElementById('order-btn');
+    const name = document.getElementById('username').value.trim();
+    if (name) { btn.disabled = false; btn.textContent = `${name}님 주문하기 →`; }
+    else { btn.disabled = true; btn.textContent = '이름을 먼저 입력해주세요'; }
+  }
+
+  document.getElementById('username').addEventListener('input', () => {
+    currentUser = document.getElementById('username').value.trim();
+    localStorage.setItem('bitcafe_username', currentUser);
+    updateSummary();
+  });
+
+  // 저장된 이름 자동 입력
+  if (currentUser) {
+    document.getElementById('username').value = currentUser;
+  }
+
+  // ── 주문 저장 (Firestore) ──
+  window.placeOrder = async function() {
+    const name = document.getElementById('username').value.trim();
+    if (!name || !selectedMenu) return;
+    const btn = document.getElementById('order-btn');
+    btn.disabled = true;
+    btn.textContent = '주문 중...';
+    try {
+      await addDoc(ordersCol, {
+        name,
+        menu: selectedMenu.name,
+        emoji: selectedMenu.emoji,
+        shot: getOption('shot'),
+        sweet: getOption('sweet'),
+        size: getOption('size'),
+        time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now(),
+        status: '준비중'
+      });
+      document.querySelectorAll('.menu-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('option-panel').classList.remove('visible');
+      document.getElementById('summary-empty').style.display = '';
+      document.getElementById('summary-content').classList.remove('visible');
+      selectedMenu = null;
+      btn.disabled = true;
+      btn.textContent = '메뉴를 선택해주세요';
+      const toast = document.getElementById('toast');
+      toast.textContent = `✅ ${name}님, 주문 완료!`;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = `${name}님 주문하기 →`;
+      alert('주문 저장 실패: ' + e.message);
+    }
+  };
+
+  // ── 알림 표시 함수 ──
+  function showNotify(type, title, desc) {
+    const panel = document.getElementById('notify-panel');
+    const card = document.createElement('div');
+    card.className = `notify-card ${type}`;
+    const icon = type === 'new-order' ? '🔔' : '✅';
+    card.innerHTML = `<span class="notify-icon">${icon}</span><div class="notify-body"><div class="notify-title">${title}</div><div class="notify-desc">${desc}</div></div>`;
+    panel.appendChild(card);
+    setTimeout(() => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(60px)';
+      card.style.transition = 'all 0.3s';
+      setTimeout(() => card.remove(), 300);
+    }, 4000);
+  }
+
+  // ── 실시간 주문 수신 (Firestore onSnapshot) ──
+  let isFirstLoad = true;
+  let prevOrderStatuses = {};
+
+  const q = query(ordersCol, orderBy('timestamp', 'desc'));
+  onSnapshot(q, (snapshot) => {
+    const newOrders = snapshot.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+
+    if (isFirstLoad) {
+      // 첫 로드 시 현재 상태 저장 (알림 없음)
+      newOrders.forEach(o => { prevOrderStatuses[o.firestoreId] = o.status; });
+      isFirstLoad = false;
+    } else {
+      const isAdmin = document.getElementById('admin-dashboard').style.display === 'block';
+      const user = localStorage.getItem('bitcafe_username') || '';
+
+      snapshot.docChanges().forEach(change => {
+        const o = { firestoreId: change.doc.id, ...change.doc.data() };
+
+        // 관리자: 새 주문 알림
+        if (change.type === 'added' && isAdmin) {
+          showNotify('new-order', '새 주문이 들어왔어요!', `${o.name}님 · ${o.emoji} ${o.menu} (${o.size})`);
+        }
+
+        // 주문자: 완료 알림
+        if (change.type === 'modified') {
+          const prev = prevOrderStatuses[o.firestoreId];
+          if (prev !== '완료' && o.status === '완료' && o.name === user) {
+            showNotify('complete', '주문이 완료됐어요! ☕', `${o.emoji} ${o.menu} 준비가 끝났어요!`);
+          }
+        }
+
+        prevOrderStatuses[o.firestoreId] = o.status;
+      });
+    }
+
+    allOrders = newOrders;
+    renderHistory();
+    if (document.getElementById('page-admin').classList.contains('active') &&
+        document.getElementById('admin-dashboard').style.display === 'block') {
+      renderAdmin();
+    }
+  });
+
+  // ── 내 주문 내역 (본인 것만) ──
+  function renderHistory() {
+    const list = document.getElementById('order-list');
+    const user = localStorage.getItem('bitcafe_username') || '';
+    const myOrders = allOrders.filter(o => o.name === user);
+    if (myOrders.length === 0) {
+      list.innerHTML = `<div class="empty-state"><span class="big-icon">🫗</span><p>${user ? '아직 주문 내역이 없어요<br>커피를 주문해보세요!' : '먼저 이름을 입력하고 주문해주세요!'}</p></div>`;
+      return;
+    }
+    list.innerHTML = myOrders.map(o => `
+      <div class="order-item">
+        <span class="order-item-emoji">${o.emoji}</span>
+        <div class="order-item-info">
+          <div class="order-item-name">${o.menu}</div>
+          <div class="order-item-detail">${o.size} · ${o.shot} · 당도: ${o.sweet}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="order-status ${o.status === '완료' ? 'done' : ''}">${o.status}</div>
+          <div class="order-item-time" style="margin-top:4px">${o.time}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── 관리자 기능 ──
+  window.adminLogin = function() {
+    const pw = document.getElementById('admin-pw').value;
+    if (pw === ADMIN_PW) {
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-dashboard').style.display = 'block';
+      renderAdmin();
+    } else {
+      document.getElementById('admin-pw').style.borderColor = '#ef4444';
+      document.getElementById('admin-pw').placeholder = '비밀번호가 틀렸어요!';
+      setTimeout(() => {
+        document.getElementById('admin-pw').style.borderColor = '';
+        document.getElementById('admin-pw').placeholder = '관리자 비밀번호 입력';
+        document.getElementById('admin-pw').value = '';
+      }, 1500);
+    }
+  };
+
+  document.getElementById('admin-pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.adminLogin();
+  });
+
+  window.adminLogout = function() {
+    document.getElementById('admin-login').style.display = 'block';
+    document.getElementById('admin-dashboard').style.display = 'none';
+    document.getElementById('admin-pw').value = '';
+  };
+
+  window.setFilter = function(btn) {
+    document.querySelectorAll('.filter-btn:not(.danger)').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderAdmin();
+  };
+
+  // 상태 변경 (Firestore 업데이트)
+  window.changeStatus = async function(firestoreId, status) {
+    try {
+      await updateDoc(doc(db, 'orders', firestoreId), { status });
+    } catch(e) { alert('상태 변경 실패: ' + e.message); }
+  };
+
+  // 전체 삭제
+  window.clearAllOrders = async function() {
+    if (!confirm('모든 주문 내역을 삭제할까요?')) return;
+    try {
+      for (const o of allOrders) {
+        await deleteDoc(doc(db, 'orders', o.firestoreId));
+      }
+    } catch(e) { alert('삭제 실패: ' + e.message); }
+  };
+
+  function renderAdmin() {
+    const waiting = allOrders.filter(o => o.status === '준비중').length;
+    const done = allOrders.filter(o => o.status === '완료').length;
+    document.getElementById('stat-total').textContent = allOrders.length;
+    document.getElementById('stat-waiting').textContent = waiting;
+    document.getElementById('stat-done').textContent = done;
+
+    const filtered = currentFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentFilter);
+    const list = document.getElementById('admin-order-list');
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state"><span class="big-icon">📭</span><p>해당 주문이 없어요</p></div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(o => `
+      <div class="admin-order-item">
+        <div class="admin-order-top">
+          <span style="font-size:26px">${o.emoji}</span>
+          <div class="admin-order-info">
+            <div class="admin-order-name">${o.name}님 · ${o.menu}</div>
+            <div class="admin-order-detail">${o.size} · ${o.shot} · 당도: ${o.sweet} · ${o.time}</div>
+          </div>
+        </div>
+        <div class="status-toggle">
+          <button class="status-btn waiting ${o.status === '준비중' ? 'active' : ''}" onclick="changeStatus('${o.firestoreId}', '준비중')">⏳ 준비중</button>
+          <button class="status-btn done ${o.status === '완료' ? 'active' : ''}" onclick="changeStatus('${o.firestoreId}', '완료')">✅ 완료</button>
+        </div>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>
