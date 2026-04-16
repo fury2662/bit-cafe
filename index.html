@@ -131,10 +131,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .order-btn:disabled{background:var(--surface2);color:var(--text-muted);cursor:not-allowed;}
 
 /* ── 하단 탭 ── */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(238,244,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;z-index:100;}
-.nav-btn{flex:1;padding:12px 8px;background:none;border:none;color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .2s;}
-.nav-btn .icon{font-size:20px;}
-.nav-btn.active{color:var(--accent-light);}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(238,244,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;z-index:100;padding:4px 6px;gap:4px;}
+.nav-btn{flex:1;padding:8px 4px;background:none;border:none;color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .2s;border-radius:12px;position:relative;}
+.nav-btn .icon{font-size:20px;transition:transform .2s;}
+.nav-btn.active{color:var(--accent);background:rgba(37,99,235,.1);font-weight:700;}
+.nav-btn.active .icon{transform:scale(1.15);}
 
 /* ── 600~1023px: bottom-nav 가운데 ── */
 @media(min-width:600px) and (max-width:1023px){
@@ -238,8 +239,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .notify-close{background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;padding:0 0 0 6px;flex-shrink:0;}
 
 /* ── 알림 뱃지 ── */
-.nav-badge{position:absolute;top:6px;right:calc(50% - 16px);width:8px;height:8px;background:#ef4444;border-radius:50%;display:none;animation:pulse 1.5s infinite;}
+.nav-badge{
+  position:absolute;top:2px;right:calc(50% - 18px);
+  min-width:16px;height:16px;padding:0 4px;
+  background:#ef4444;border-radius:20px;
+  display:none;font-size:10px;font-weight:700;color:#fff;
+  line-height:16px;text-align:center;
+  box-shadow:0 1px 4px rgba(239,68,68,.5);
+}
 @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-15deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}}
+.nav-btn.has-notify .icon{animation:shake .6s ease infinite;display:inline-block;}
 .nav-btn{position:relative;flex:1;padding:12px 8px;background:none;border:none;color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .2s;}
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--accent);color:#fff;font-size:14px;font-weight:500;padding:12px 24px;border-radius:30px;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -1157,13 +1167,20 @@ window.sendMessage = async function() {
     showToast('❌ 전송 실패, 다시 시도해주세요', '#ef4444');
   }
 };
-function showBadge(target){ // 'order' | 'history' | 'admin'
-  const badge=document.getElementById('badge-'+target);
-  if(badge) badge.style.display='block';
+const badgeCounts = {};
+function showBadge(target) {
+  badgeCounts[target] = (badgeCounts[target] || 0) + 1;
+  const badge = document.getElementById('badge-'+target);
+  const btn   = document.getElementById('nav-'+target);
+  if (badge) { badge.style.display='block'; badge.textContent = badgeCounts[target] > 9 ? '9+' : badgeCounts[target]; }
+  if (btn)   btn.classList.add('has-notify');
 }
-function hideBadge(target){
-  const badge=document.getElementById('badge-'+target);
-  if(badge) badge.style.display='none';
+function hideBadge(target) {
+  badgeCounts[target] = 0;
+  const badge = document.getElementById('badge-'+target);
+  const btn   = document.getElementById('nav-'+target);
+  if (badge) { badge.style.display='none'; badge.textContent=''; }
+  if (btn)   btn.classList.remove('has-notify');
 }
 
 // ── 토스트/알림 ──
