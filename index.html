@@ -441,7 +441,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div style="display:flex;align-items:center;gap:8px;">
             <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:6px 10px;">
               <label style="font-size:11px;color:var(--text-muted);white-space:nowrap;">총 개수</label>
-              <input type="number" id="cup-total-input" min="1" max="100" value="10"
+              <input type="number" id="cup-total-input" min="0" max="100" value="10"
                 style="width:44px;background:none;border:none;font-size:14px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;text-align:center;outline:none;"
                 onchange="setCupTotal(this.value)">
             </div>
@@ -735,7 +735,7 @@ let currentUser  = localStorage.getItem('bitcafe_username') || '';
 
 // ── 공용컵 총 개수 설정 ──
 window.setCupTotal = function(val) {
-  const n = Math.max(1, Math.min(100, parseInt(val) || 10));
+  const n = Math.max(0, Math.min(100, parseInt(val) || 0));
   TOTAL_CUPS = n;
   localStorage.setItem('bitcafe_total_cups', n);
   document.getElementById('cup-total-input').value = n;
