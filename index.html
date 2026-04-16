@@ -865,7 +865,8 @@ function updateSummary(){
   if(document.getElementById('sum-name-pc'))document.getElementById('sum-name-pc').textContent=selectedMenu.name;
   if(document.getElementById('sum-detail-pc'))document.getElementById('sum-detail-pc').textContent=detail;
   // 버튼
-  ['order-btn','order-btn-pc'].forEach(id=>{const b=document.getElementById(id);if(!b)return;if(name){b.disabled=false;b.textContent=`${name}님 주문하기 →`;}else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}});
+  const pending=allOrders.filter(o=>o.status==='주문확인중'||o.status==='제조중').length;
+  ['order-btn','order-btn-pc'].forEach(id=>{const b=document.getElementById(id);if(!b)return;if(pending>=5){b.disabled=true;b.textContent='⚠️ 주문 대기 중 (잠시 후 시도)';}else if(name){b.disabled=false;b.textContent=`${name}님 주문하기 →`;}else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}});
 }
 
 // ── 공용컵 ──
@@ -1053,6 +1054,9 @@ window.placeDelivery = async function() {
   if (!name) { showToast('⚠️ 이름을 입력해주세요','#f59e0b'); return; }
   if (!location) { showToast('⚠️ 배달 위치를 입력해주세요','#f59e0b'); return; }
   if (!selectedDeliveryMenu) { showToast('⚠️ 메뉴를 선택해주세요','#f59e0b'); return; }
+  // 대기 중인 주문 5개 이상이면 주문 차단
+  const pending=allOrders.filter(o=>o.status==='주문확인중'||o.status==='제조중').length;
+  if(pending>=5){showToast('⚠️ 주문이 밀려있어요! 잠시 후 다시 시도해주세요','#ef4444');return;}
 
   const cup = getDOption('dcup');
   if (cup.includes('공용')) {
@@ -1210,6 +1214,9 @@ function showNotify(type,title,desc){
 // ── 주문 ──
 window.placeOrder=async function(){
   const name=getName();if(!name||!selectedMenu)return;
+  // 대기 중인 주문 5개 이상이면 주문 차단
+  const pending=allOrders.filter(o=>o.status==='주문확인중'||o.status==='제조중').length;
+  if(pending>=5){showToast('⚠️ 주문이 밀려있어요! 잠시 후 다시 시도해주세요','#ef4444');return;}
   const cup=getOption('cup');
   if(cup.includes('공용')){
     const used=allOrders.filter(o=>(o.cup||'').includes('공용')).length;
