@@ -318,7 +318,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
               <div class="chip" data-group="sweet" onclick="selectChip(this)">설탕 없음</div>
               <div class="chip selected" data-group="sweet" onclick="selectChip(this)">보통</div>
               <div class="chip" data-group="sweet" onclick="selectChip(this)">달게</div>
-              <div class="chip" data-group="sweet" onclick="selectChip(this)">더달게</div>
+              <div class="chip" data-group="sweet" onclick="selectChip(this)">개달게</div>
             </div>
           </div>
           <div class="option-row">
@@ -373,7 +373,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div class="chip" data-group="sweet" onclick="selectChip(this)">설탕 없음</div>
             <div class="chip selected" data-group="sweet" onclick="selectChip(this)">보통</div>
             <div class="chip" data-group="sweet" onclick="selectChip(this)">달게</div>
-            <div class="chip" data-group="sweet" onclick="selectChip(this)">더달게</div>
+            <div class="chip" data-group="sweet" onclick="selectChip(this)">개달게</div>
           </div>
         </div>
         <div class="option-row">
@@ -656,7 +656,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
               <div class="chip" data-group="dsweet" onclick="selectChip(this)">설탕 없음</div>
               <div class="chip selected" data-group="dsweet" onclick="selectChip(this)">보통</div>
               <div class="chip" data-group="dsweet" onclick="selectChip(this)">달게</div>
-              <div class="chip" data-group="dsweet" onclick="selectChip(this)">더달게</div>
+              <div class="chip" data-group="dsweet" onclick="selectChip(this)">개달게</div>
             </div>
           </div>
           <div class="option-row">
@@ -725,7 +725,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div class="chip" data-group="dsweet" onclick="selectChip(this)">설탕 없음</div>
             <div class="chip selected" data-group="dsweet" onclick="selectChip(this)">보통</div>
             <div class="chip" data-group="dsweet" onclick="selectChip(this)">달게</div>
-            <div class="chip" data-group="dsweet" onclick="selectChip(this)">더달게</div>
+            <div class="chip" data-group="dsweet" onclick="selectChip(this)">개달게</div>
           </div>
         </div>
         <div class="option-row">
@@ -948,13 +948,15 @@ window.returnCup=function(){
 
 // ── 텔레그램 알림 ──
 const TG_TOKEN = '8052031047:AAH-Sg-61w-oTiu407wk62VBTB29dzMEjLQ';
-const TG_CHAT  = '8541660301';
+const TG_CHATS = ['8541660301', '8653000541']; // 관리자, 바리스타(서진)
 function sendTelegram(msg){
-  fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({chat_id:TG_CHAT, text:msg})
-  }).catch(()=>{});
+  TG_CHATS.forEach(chatId => {
+    fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:chatId, text:msg})
+    }).catch(()=>{});
+  });
 }
 
 // ── 브라우저 알림 권한 요청 ──
@@ -1201,26 +1203,30 @@ window.sendMessage = async function() {
   btn.disabled = true; btn.textContent = '전송 중...';
 
   try {
-    // 텍스트 메시지 전송
+    // 텍스트 메시지 전송 (전체 수신자)
     if (text) {
-      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({chat_id: TG_CHAT, text: `💬 바리스타 메시지\n👤 ${name}님\n📝 ${text}`})
-      });
+      for (const chatId of TG_CHATS) {
+        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({chat_id: chatId, text: `💬 바리스타 메시지\n👤 ${name}님\n📝 ${text}`})
+        });
+      }
     }
 
-    // 사진 전송
+    // 사진 전송 (전체 수신자)
     const photoFile = document.getElementById('msg-photo').files[0];
     if (photoFile) {
-      const formData = new FormData();
-      formData.append('chat_id', TG_CHAT);
-      formData.append('photo', photoFile);
-      formData.append('caption', `📷 ${name}님의 사진${text ? '\n📝 ' + text : ''}`);
-      await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, {
-        method: 'POST',
-        body: formData
-      });
+      for (const chatId of TG_CHATS) {
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('photo', photoFile);
+        formData.append('caption', `📷 ${name}님의 사진${text ? '\n📝 ' + text : ''}`);
+        await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, {
+          method: 'POST',
+          body: formData
+        });
+      }
     }
 
     // 초기화
