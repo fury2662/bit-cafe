@@ -253,9 +253,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .nav-btn{position:relative;flex:1;padding:12px 8px;background:none;border:none;color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .2s;}
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--accent);color:#fff;font-size:14px;font-weight:500;padding:12px 24px;border-radius:30px;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.empty-state{text-align:center;padding:50px 20px;color:var(--text-muted);}
-.empty-state .big-icon{font-size:42px;margin-bottom:10px;display:block;}
-.empty-state p{font-size:13px;}
+
 #msg-dropzone.drag-over{border-color:var(--accent);background:var(--surface2);transform:scale(1.01);}
 </style>
 </head>
@@ -453,6 +451,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab(this,'orders')">📋 주문 목록</button>
+        <button class="admin-tab" onclick="switchAdminTab(this,'stock')">📦 재고 관리</button>
         <button class="admin-tab" onclick="switchAdminTab(this,'stats')">📊 통계</button>
       </div>
       <div id="tab-orders">
@@ -466,6 +465,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         </div>
         <div id="admin-order-list"></div>
       </div>
+
+      <!-- 재고 관리 탭 -->
+      <div id="tab-stock" style="display:none;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">메뉴별 재고를 설정하면 주문 시 자동으로 1개씩 차감됩니다. 0이 되면 주문이 차단돼요.</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <button onclick="resetAllStock()" style="padding:8px 14px;background:rgba(37,99,235,.1);border:1px solid var(--accent);border-radius:12px;color:var(--accent);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 전체 재고 초기화</button>
+        </div>
+        <div id="stock-list"></div>
+      </div>
+
       <div id="tab-stats" style="display:none;">
         <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
           <button class="filter-btn danger" onclick="clearStats()">🗑 통계 초기화</button>
@@ -709,7 +718,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyAphNv8Gz1Qb2O5jXhnV99hKawmiICR4hA",
@@ -721,6 +730,8 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 const ordersCol = collection(db,'orders');
+const stockCol  = collection(db,'stock'); // 메뉴별 재고
+
 
 const ADMIN_PW       = '1234';
 const ADMIN_PW_SUPER = '9876';
@@ -1065,6 +1076,9 @@ window.placeDelivery = async function() {
     const rem = Math.max(0, TOTAL_CUPS - Math.max(0, used-ret));
     if (rem<=0) { showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444'); return; }
   }
+  // 재고 체크
+  const stockOk = await checkStock(selectedDeliveryMenu.name);
+  if (!stockOk) { showToast(`⛔ ${selectedDeliveryMenu.name} 재고가 없어요!`,'#ef4444'); return; }
 
   ['delivery-btn','delivery-btn-pc'].forEach(id=>{const b=document.getElementById(id);if(b){b.disabled=true;b.textContent='주문 중...';}});
   try {
@@ -1077,6 +1091,7 @@ window.placeDelivery = async function() {
       date:new Date().toISOString().split('T')[0],
       timestamp:Date.now(), status:'주문확인중'
     });
+    await decrementStock(selectedDeliveryMenu.name);
     saveRecentLocation(location);
     document.querySelectorAll('#page-delivery .menu-card').forEach(c=>c.classList.remove('selected'));
     selectedDeliveryMenu = null;
@@ -1093,6 +1108,7 @@ window.placeDelivery = async function() {
   }
 };
 
+// ── 바리스타 메시지 ──
 window.previewPhoto = function(file) {
   if (!file) return;
   const dropzone = document.getElementById('msg-dropzone');
@@ -1214,7 +1230,6 @@ function showNotify(type,title,desc){
 // ── 주문 ──
 window.placeOrder=async function(){
   const name=getName();if(!name||!selectedMenu)return;
-  // 대기 중인 주문 5개 이상이면 주문 차단
   const pending=allOrders.filter(o=>o.status==='주문확인중'||o.status==='제조중').length;
   if(pending>=5){showToast('⚠️ 주문이 밀려있어요! 잠시 후 다시 시도해주세요','#ef4444');return;}
   const cup=getOption('cup');
@@ -1224,6 +1239,10 @@ window.placeOrder=async function(){
     const rem=Math.max(0,TOTAL_CUPS-Math.max(0,used-ret));
     if(rem<=0){showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444');return;}
   }
+  // 재고 체크
+  const stockOk = await checkStock(selectedMenu.name);
+  if (!stockOk) { showToast(`⛔ ${selectedMenu.name} 재고가 없어요!`,'#ef4444'); return; }
+
   ['order-btn','order-btn-pc'].forEach(id=>{const b=document.getElementById(id);if(b){b.disabled=true;b.textContent='주문 중...';}});
   try{
     await addDoc(ordersCol,{name,menu:selectedMenu.name,emoji:selectedMenu.emoji,
@@ -1231,6 +1250,7 @@ window.placeOrder=async function(){
       shot:getOption('shot'),sweet:getOption('sweet'),cup,
       time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
       date:new Date().toISOString().split('T')[0],timestamp:Date.now(),status:'주문확인중'});
+    await decrementStock(selectedMenu.name);
     document.querySelectorAll('.menu-card').forEach(c=>c.classList.remove('selected'));
     selectedMenu=null;
     ['option-panel','option-panel-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('visible');});
@@ -1333,9 +1353,11 @@ window.adminLogin=function(){
     isSuper = pw===ADMIN_PW_SUPER;
     document.getElementById('admin-login').style.display='none';
     document.getElementById('admin-dashboard').style.display='block';
-    // 통계 탭 표시 여부
+    // 통계/재고 탭 표시 여부
     const statsTab=document.querySelector('.admin-tab[onclick*="stats"]');
+    const stockTab=document.querySelector('.admin-tab[onclick*="stock"]');
     if(statsTab) statsTab.style.display=isSuper?'':'none';
+    if(stockTab) stockTab.style.display=isSuper?'':'none';
     // 총 개수 입력칸 초기화
     const inp=document.getElementById('cup-total-input');
     if(inp) inp.value=TOTAL_CUPS;
@@ -1355,11 +1377,13 @@ window.adminLogout=function(){
   document.getElementById('admin-pw').value='';
 };
 window.switchAdminTab=function(btn,tab){
-  if(tab==='stats'&&!isSuper) return;
+  if((tab==='stats'||tab==='stock')&&!isSuper) return;
   document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('tab-orders').style.display=tab==='orders'?'block':'none';
+  document.getElementById('tab-stock').style.display=tab==='stock'?'block':'none';
   document.getElementById('tab-stats').style.display=tab==='stats'?'block':'none';
-  if(tab==='stats')renderStats();
+  if(tab==='stats') renderStats();
+  if(tab==='stock') renderStockList();
 };
 window.setFilter=function(btn){
   document.querySelectorAll('.filter-btn:not(.danger)').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
@@ -1400,7 +1424,108 @@ function renderAdmin(){
     </div>`).join('');
 }
 
-// ── 통계 ──
+// ── 재고 관리 ──
+let stockData = {}; // { 메뉴명: { qty, unlimited } }
+
+// Firebase stock 컬렉션 실시간 수신
+onSnapshot(stockCol, snapshot => {
+  stockData = {};
+  snapshot.docs.forEach(d => { stockData[d.id] = d.data(); });
+  renderStockList();
+});
+
+// 전체 메뉴 목록 (MENUS 기반)
+function getAllMenuList() {
+  return [
+    ...MENUS.both.map(m=>({...m,type:'both'})),
+    ...MENUS.ice.map(m=>({...m,type:'ice'})),
+    ...MENUS.hot.map(m=>({...m,type:'hot'})),
+  ];
+}
+
+// 재고 목록 렌더링
+function renderStockList() {
+  const list = document.getElementById('stock-list');
+  if (!list) return;
+  const allMenuList = getAllMenuList();
+  const typeName = {both:'HOT·ICE 겸용', ice:'ICE 전용', hot:'HOT 전용'};
+  const typeColor = {both:'#7c3aed', ice:'#0ea5e9', hot:'#e05c3a'};
+
+  let html = '';
+  ['both','ice','hot'].forEach(type => {
+    const menus = allMenuList.filter(m=>m.type===type);
+    html += `<div style="font-size:11px;font-weight:700;letter-spacing:1px;color:${typeColor[type]};margin:14px 0 8px;">${typeName[type].toUpperCase()}</div>`;
+    menus.forEach(m => {
+      const s = stockData[m.name] || { qty: -1, unlimited: true };
+      const isUnlimited = s.unlimited !== false;
+      const qty = s.qty ?? -1;
+      const low = !isUnlimited && qty <= 5;
+      const soldout = !isUnlimited && qty <= 0;
+      html += `
+        <div style="background:var(--surface);border:1px solid ${soldout?'#fca5a5':low?'#fde68a':'var(--border)'};border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;">${m.emoji}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--cream);">${m.name}</div>
+            <div style="font-size:11px;margin-top:2px;color:${soldout?'#ef4444':low?'#d97706':'#059669'};">
+              ${soldout?'⛔ 품절':low?`⚠️ 재고 부족 (${qty}개)`:`${isUnlimited?'∞ 무제한':`${qty}개 남음`}`}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label style="font-size:11px;color:var(--text-muted);">무제한</label>
+            <input type="checkbox" ${isUnlimited?'checked':''} onchange="setUnlimited('${m.name}',this.checked)"
+              style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);">
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button onclick="adjustStock('${m.name}',-1)" ${isUnlimited?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;${isUnlimited?'opacity:.4':''}">−</button>
+            <input type="number" value="${isUnlimited?'∞':qty}" ${isUnlimited?'disabled':''}
+              onchange="setStockQty('${m.name}',this.value)"
+              style="width:52px;text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;${isUnlimited?'opacity:.4':''}">
+            <button onclick="adjustStock('${m.name}',1)" ${isUnlimited?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;${isUnlimited?'opacity:.4':''}">＋</button>
+          </div>
+        </div>`;
+    });
+  });
+  list.innerHTML = html;
+}
+
+window.setUnlimited = async function(menuName, unlimited) {
+  const ref = doc(db,'stock',menuName);
+  await setDoc(ref, { unlimited, qty: unlimited ? -1 : 100 }, { merge: true });
+};
+window.setStockQty = async function(menuName, val) {
+  const qty = Math.max(0, parseInt(val)||0);
+  await setDoc(doc(db,'stock',menuName), { qty, unlimited: false }, { merge: true });
+};
+window.adjustStock = async function(menuName, delta) {
+  const s = stockData[menuName] || { qty: 0, unlimited: false };
+  const newQty = Math.max(0, (s.qty||0) + delta);
+  await setDoc(doc(db,'stock',menuName), { qty: newQty, unlimited: false }, { merge: true });
+};
+window.resetAllStock = async function() {
+  if (!confirm('전체 재고를 무제한으로 초기화할까요?')) return;
+  const all = getAllMenuList();
+  for (const m of all) {
+    await setDoc(doc(db,'stock',m.name), { qty: -1, unlimited: true }, { merge: true });
+  }
+  showToast('✅ 전체 재고 초기화됐어요!');
+};
+
+// 재고 체크 (주문/배달 공통)
+async function checkStock(menuName) {
+  const s = stockData[menuName];
+  if (!s || s.unlimited !== false) return true; // 무제한이면 통과
+  if ((s.qty||0) <= 0) return false;
+  return true;
+}
+// 재고 차감
+async function decrementStock(menuName) {
+  const s = stockData[menuName];
+  if (!s || s.unlimited !== false) return;
+  const newQty = Math.max(0, (s.qty||0) - 1);
+  await setDoc(doc(db,'stock',menuName), { qty: newQty }, { merge: true });
+}
+
+// ── 통계 (HOT/ICE 구별, 메뉴 순서 고정) ──
 window.clearStats=function(){if(!confirm('통계를 초기화할까요?'))return;localStorage.removeItem('bitcafe_stats');renderStats();};
 window.setDateRange=function(type){
   const today=new Date(),fmt=d=>d.toISOString().split('T')[0];let s='',e='';
@@ -1417,13 +1542,58 @@ function renderStats(){
   const sv=document.getElementById('stat-date-start')?.value,ev=document.getElementById('stat-date-end')?.value;
   if(sv||ev) data=data.filter(o=>(!sv||o.date>=sv)&&(!ev||o.date<=ev));
   if(data.length===0){['chart-menu','chart-time','chart-cup'].forEach(id=>{document.getElementById(id).innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터가 없어요</div>`;});return;}
-  const mc={};data.forEach(o=>{mc[o.menu]=(mc[o.menu]||0)+1;});
-  const ms=Object.entries(mc).sort((a,b)=>b[1]-a[1]),mm=ms[0][1];
-  const cols=['#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe'];
-  document.getElementById('chart-menu').innerHTML=ms.map(([n,c],i)=>`<div class="bar-row"><div class="bar-label" title="${n}">${n}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(c/mm*100)}%;background:${cols[Math.min(i,5)]}"><span class="bar-val">${c}건</span></div></div></div>`).join('');
+
+  // ── 메뉴별 통계 (HOT/ICE 구별, MENUS 순서 고정) ──
+  const typeNames = {both:'HOT·ICE 겸용', ice:'ICE 전용', hot:'HOT 전용'};
+  const typeColors = {both:{hot:'#e05c3a',ice:'#0ea5e9'}, ice:{ice:'#0ea5e9'}, hot:{hot:'#e05c3a'}};
+  let menuHtml = '';
+  ['both','ice','hot'].forEach(type => {
+    const menus = MENUS[type];
+    const hasData = menus.some(m => {
+      if(type==='both') return data.some(o=>o.menu===m.name);
+      return data.some(o=>o.menu===m.name);
+    });
+    if(!hasData) return;
+    menuHtml += `<div style="font-size:11px;font-weight:700;letter-spacing:1px;color:${Object.values(typeColors[type])[0]};margin:12px 0 6px;">${typeNames[type].toUpperCase()}</div>`;
+    menus.forEach(m => {
+      if(type==='both'){
+        const hotCnt = data.filter(o=>o.menu===m.name&&(o.temp||'').includes('HOT')).length;
+        const iceCnt = data.filter(o=>o.menu===m.name&&(o.temp||'').includes('ICE')).length;
+        const total  = hotCnt + iceCnt;
+        if(!total) return;
+        const maxVal = Math.max(...data.map((_,__)=>1), total);
+        const allMax = data.length || 1;
+        menuHtml += `<div class="bar-row" style="margin-bottom:6px;">
+          <div class="bar-label" title="${m.emoji} ${m.name}">${m.emoji} ${m.name}</div>
+          <div style="flex:1;">`;
+        if(hotCnt) menuHtml += `<div class="bar-track" style="margin-bottom:2px;">
+          <div class="bar-fill" style="width:${Math.round(hotCnt/allMax*100)}%;background:#e05c3a;min-width:28px;">
+            <span class="bar-val">🔥 ${hotCnt}건</span></div></div>`;
+        if(iceCnt) menuHtml += `<div class="bar-track">
+          <div class="bar-fill" style="width:${Math.round(iceCnt/allMax*100)}%;background:#0ea5e9;min-width:28px;">
+            <span class="bar-val">🧊 ${iceCnt}건</span></div></div>`;
+        menuHtml += `</div></div>`;
+      } else {
+        const cnt = data.filter(o=>o.menu===m.name).length;
+        if(!cnt) return;
+        const allMax = data.length || 1;
+        const color = type==='ice'?'#0ea5e9':'#e05c3a';
+        menuHtml += `<div class="bar-row" style="margin-bottom:6px;">
+          <div class="bar-label" title="${m.emoji} ${m.name}">${m.emoji} ${m.name}</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${Math.round(cnt/allMax*100)}%;background:${color};">
+              <span class="bar-val">${cnt}건</span></div></div></div>`;
+      }
+    });
+  });
+  document.getElementById('chart-menu').innerHTML = menuHtml || `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터가 없어요</div>`;
+
+  // ── 시간대별 ──
   const tc={};data.forEach(o=>{if(!o.time)return;const m=o.time.match(/(\d+):(\d+)/);if(!m)return;let h=parseInt(m[1]);if(o.time.includes('오후')&&h!==12)h+=12;if(o.time.includes('오전')&&h===12)h=0;const sl=`${h}시`;tc[sl]=(tc[sl]||0)+1;});
   const ts=Object.entries(tc).sort((a,b)=>parseInt(a[0])-parseInt(b[0])),tm=ts.length?Math.max(...ts.map(e=>e[1])):1;
-  document.getElementById('chart-time').innerHTML=ts.length===0?`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터 없음</div>`:ts.map(([sl,c])=>`<div class="bar-row"><div class="bar-label">${sl}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(c/tm*100)}%;background:#0ea5e9"><span class="bar-val">${c}건</span></div></div></div>`).join('');
+  document.getElementById('chart-time').innerHTML=ts.length===0?`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터 없음</div>`:ts.map(([sl,c])=>`<div class="bar-row"><div class="bar-label">${sl}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(c/tm*100)}%;background:#2563eb"><span class="bar-val">${c}건</span></div></div></div>`).join('');
+
+  // ── 컵 비율 ──
   const per=data.filter(o=>(o.cup||'').includes('개인')).length,sh=data.filter(o=>(o.cup||'').includes('공용')).length,tot=per+sh||1;
   const pp=Math.round(per/tot*100),sp=100-pp,r=40,ci=Math.round(2*Math.PI*r),pd=Math.round(pp/100*ci);
   document.getElementById('chart-cup').innerHTML=`<div class="cup-chart"><svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" fill="none" stroke="#ddeaff" stroke-width="16"/><circle cx="50" cy="50" r="${r}" fill="none" stroke="#2563eb" stroke-width="16" stroke-dasharray="${pd} ${ci-pd}" transform="rotate(-90 50 50)"/><text x="50" y="46" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">${pp}%</text><text x="50" y="60" text-anchor="middle" font-size="9" fill="var(--text-muted)">개인컵</text></svg><div class="cup-legend"><div class="cup-legend-item"><div class="cup-dot" style="background:#2563eb"></div><div>♻️ 개인컵 <strong>${per}건</strong>(${pp}%)</div></div><div class="cup-legend-item"><div class="cup-dot" style="background:#ddeaff;border:1px solid #bdd4f4"></div><div>🥤 공용컵 <strong>${sh}건</strong>(${sp}%)</div></div></div></div>`;
