@@ -452,6 +452,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab(this,'orders')">📋 주문 목록</button>
         <button class="admin-tab" onclick="switchAdminTab(this,'stock')">📦 재고 관리</button>
+        <button class="admin-tab" onclick="switchAdminTab(this,'menus')">🍽 메뉴 관리</button>
         <button class="admin-tab" onclick="switchAdminTab(this,'stats')">📊 통계</button>
       </div>
       <div id="tab-orders">
@@ -473,6 +474,41 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <button onclick="resetAllStock()" style="padding:8px 14px;background:rgba(37,99,235,.1);border:1px solid var(--accent);border-radius:12px;color:var(--accent);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 전체 재고 초기화</button>
         </div>
         <div id="stock-list"></div>
+      </div>
+
+      <!-- 메뉴 관리 탭 -->
+      <div id="tab-menus" style="display:none;">
+        <!-- 추가/수정 폼 -->
+        <div class="cup-mgmt-card" style="margin-bottom:14px;">
+          <div class="cup-mgmt-title" style="margin-bottom:10px;" id="menu-form-title">➕ 새 메뉴 추가</div>
+          <div style="display:grid;grid-template-columns:1fr 72px;gap:8px;margin-bottom:8px;">
+            <div>
+              <label style="font-size:11px;color:var(--text-muted);font-weight:500;">메뉴명</label>
+              <input type="text" id="mf-name" placeholder="예: 돌체라떼" maxlength="12"
+                style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-muted);font-weight:500;">이모지</label>
+              <input type="text" id="mf-emoji" placeholder="🍯" maxlength="2"
+                style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:18px;text-align:center;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:500;">분류</label>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <button class="mf-type-btn active" data-type="both" onclick="selectMenuType(this)" style="flex:1;padding:7px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1px solid var(--accent);background:rgba(37,99,235,.1);color:var(--accent);">HOT·ICE</button>
+              <button class="mf-type-btn" data-type="ice" onclick="selectMenuType(this)" style="flex:1;padding:7px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);">ICE 전용</button>
+              <button class="mf-type-btn" data-type="hot" onclick="selectMenuType(this)" style="flex:1;padding:7px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);">HOT 전용</button>
+            </div>
+          </div>
+          <input type="hidden" id="mf-editkey">
+          <div style="display:flex;gap:8px;">
+            <button class="order-btn" onclick="saveMenuEdit()" style="flex:1;padding:10px;font-size:13px;">💾 저장</button>
+            <button onclick="cancelMenuEdit()" style="padding:10px 14px;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;">취소</button>
+          </div>
+        </div>
+        <!-- 메뉴 목록 -->
+        <div id="menu-mgmt-list"></div>
       </div>
 
       <div id="tab-stats" style="display:none;">
@@ -1353,11 +1389,13 @@ window.adminLogin=function(){
     isSuper = pw===ADMIN_PW_SUPER;
     document.getElementById('admin-login').style.display='none';
     document.getElementById('admin-dashboard').style.display='block';
-    // 통계/재고 탭 표시 여부
+    // 통계/재고/메뉴 탭 표시 여부
     const statsTab=document.querySelector('.admin-tab[onclick*="stats"]');
     const stockTab=document.querySelector('.admin-tab[onclick*="stock"]');
+    const menusTab=document.querySelector('.admin-tab[onclick*="menus"]');
     if(statsTab) statsTab.style.display=isSuper?'':'none';
     if(stockTab) stockTab.style.display=isSuper?'':'none';
+    if(menusTab) menusTab.style.display=isSuper?'':'none';
     // 총 개수 입력칸 초기화
     const inp=document.getElementById('cup-total-input');
     if(inp) inp.value=TOTAL_CUPS;
@@ -1377,13 +1415,15 @@ window.adminLogout=function(){
   document.getElementById('admin-pw').value='';
 };
 window.switchAdminTab=function(btn,tab){
-  if((tab==='stats'||tab==='stock')&&!isSuper) return;
+  if((tab==='stats'||tab==='stock'||tab==='menus')&&!isSuper) return;
   document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('tab-orders').style.display=tab==='orders'?'block':'none';
   document.getElementById('tab-stock').style.display=tab==='stock'?'block':'none';
+  document.getElementById('tab-menus').style.display=tab==='menus'?'block':'none';
   document.getElementById('tab-stats').style.display=tab==='stats'?'block':'none';
   if(tab==='stats') renderStats();
   if(tab==='stock') renderStockList();
+  if(tab==='menus') renderMenuMgmtList();
 };
 window.setFilter=function(btn){
   document.querySelectorAll('.filter-btn:not(.danger)').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
@@ -1424,6 +1464,190 @@ function renderAdmin(){
     </div>`).join('');
 }
 
+// ── 메뉴 관리 (방법2: 하드코딩 기본값 + Firebase 덮어쓰기) ──
+// Firebase menus 컬렉션: { name, emoji, type, order }
+// 없으면 MENUS 하드코딩 그대로 사용 → 항상 메뉴 보임 보장
+
+const menusCol = collection(db,'menus');
+let dbMenus = null; // null = 아직 로드 안됨, [] = DB에 없음, [...] = DB 메뉴
+
+onSnapshot(query(menusCol, orderBy('order','asc')), snapshot => {
+  if (snapshot.empty) {
+    dbMenus = [];
+  } else {
+    dbMenus = snapshot.docs.map(d => ({ _id: d.id, ...d.data() }));
+  }
+  applyMenusToGrid();
+  renderMenuMgmtList();
+});
+
+// 그리드에 메뉴 적용 (DB 있으면 DB, 없으면 하드코딩)
+function applyMenusToGrid() {
+  const source = (dbMenus && dbMenus.length > 0) ? dbMenus : null;
+  ['both','ice','hot'].forEach(type => {
+    const list = source ? source.filter(m=>m.type===type) : MENUS[type].map(m=>({...m,type}));
+    ['menu-'+type, 'delivery-menu-'+type].forEach(gridId => {
+      const grid = document.getElementById(gridId);
+      if (!grid) return;
+      const isDelivery = gridId.startsWith('delivery');
+      const fn = isDelivery ? 'selectDeliveryMenu' : 'selectMenu';
+      grid.innerHTML = list.map(m => `
+        <div class="menu-card ${type==='ice'?'cold':type==='hot'?'hot':'both'}"
+             data-menu="${m.name}" data-emoji="${m.emoji}" data-type="${type}"
+             onclick="${fn}(this)">
+          <span class="menu-emoji">${m.emoji}</span>
+          <div class="menu-row">
+            <span class="menu-name">${m.name}</span>
+            ${type==='both'?'<span class="menu-tag tag-both">HOT·ICE</span>':type==='ice'?'<span class="menu-tag tag-cold">ICE</span>':'<span class="menu-tag tag-hot">HOT</span>'}
+          </div>
+        </div>`).join('');
+    });
+  });
+}
+
+// 현재 메뉴 목록 (DB or 하드코딩)
+function getCurrentMenus() {
+  if (dbMenus && dbMenus.length > 0) return dbMenus;
+  return [
+    ...MENUS.both.map((m,i)=>({...m,type:'both',order:i+1})),
+    ...MENUS.ice.map((m,i)=>({...m,type:'ice',order:100+i})),
+    ...MENUS.hot.map((m,i)=>({...m,type:'hot',order:200+i})),
+  ];
+}
+
+// 메뉴 관리 목록 렌더링
+function renderMenuMgmtList() {
+  const list = document.getElementById('menu-mgmt-list');
+  if (!list) return;
+  const menus = getCurrentMenus();
+  const tl = {both:'HOT·ICE', ice:'ICE', hot:'HOT'};
+  const tc = {both:'tag-both', ice:'tag-cold', hot:'tag-hot'};
+  const sections = {both:'☕ HOT·ICE 겸용', ice:'🧊 ICE 전용', hot:'🔥 HOT 전용'};
+  let html = '';
+  ['both','ice','hot'].forEach(type => {
+    const items = menus.filter(m=>m.type===type);
+    if (!items.length) return;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin:12px 0 6px;">${sections[type]}</div>`;
+    items.forEach(m => {
+      const key = m._id || m.name;
+      html += `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;flex-shrink:0;">${m.emoji}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--cream);">${m.name}</div>
+            <span class="menu-type-tag ${tc[m.type]}" style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">${tl[m.type]}</span>
+          </div>
+          <div style="display:flex;gap:5px;flex-shrink:0;">
+            <button onclick="startMenuEdit('${key}')" style="padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);">✏️</button>
+            <button onclick="deleteMenuEntry('${key}','${m.name}')" style="padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:1px solid #fca5a5;background:rgba(239,68,68,.07);color:#ef4444;">🗑</button>
+          </div>
+        </div>`;
+    });
+  });
+  list.innerHTML = html;
+}
+
+// 분류 버튼 선택
+window.selectMenuType = function(btn) {
+  document.querySelectorAll('.mf-type-btn').forEach(b => {
+    b.style.borderColor='var(--border)'; b.style.background='var(--surface2)'; b.style.color='var(--text-muted)';
+  });
+  btn.style.borderColor='var(--accent)'; btn.style.background='rgba(37,99,235,.1)'; btn.style.color='var(--accent)';
+};
+
+// 수정 시작
+window.startMenuEdit = function(key) {
+  const m = getCurrentMenus().find(x=>(x._id||x.name)===key);
+  if (!m) return;
+  document.getElementById('mf-name').value = m.name;
+  document.getElementById('mf-emoji').value = m.emoji;
+  document.getElementById('mf-editkey').value = key;
+  document.getElementById('menu-form-title').textContent = '✏️ 메뉴 수정';
+  // 분류 버튼 활성화
+  document.querySelectorAll('.mf-type-btn').forEach(b => {
+    const active = b.dataset.type === m.type;
+    b.style.borderColor = active?'var(--accent)':'var(--border)';
+    b.style.background  = active?'rgba(37,99,235,.1)':'var(--surface2)';
+    b.style.color       = active?'var(--accent)':'var(--text-muted)';
+  });
+  document.getElementById('mf-name').focus();
+};
+
+// 취소
+window.cancelMenuEdit = function() {
+  document.getElementById('mf-name').value='';
+  document.getElementById('mf-emoji').value='';
+  document.getElementById('mf-editkey').value='';
+  document.getElementById('menu-form-title').textContent='➕ 새 메뉴 추가';
+  document.querySelectorAll('.mf-type-btn').forEach((b,i) => {
+    const active = i===0;
+    b.style.borderColor=active?'var(--accent)':'var(--border)';
+    b.style.background=active?'rgba(37,99,235,.1)':'var(--surface2)';
+    b.style.color=active?'var(--accent)':'var(--text-muted)';
+  });
+};
+
+// 저장 (추가 or 수정)
+window.saveMenuEdit = async function() {
+  const name  = document.getElementById('mf-name').value.trim();
+  const emoji = document.getElementById('mf-emoji').value.trim();
+  const type  = document.querySelector('.mf-type-btn[style*="accent"]')?.dataset.type || 'both';
+  const editKey = document.getElementById('mf-editkey').value;
+  if (!name)  { showToast('⚠️ 메뉴명을 입력해주세요','#f59e0b'); return; }
+  if (!emoji) { showToast('⚠️ 이모지를 입력해주세요','#f59e0b'); return; }
+
+  // DB에 없는 상태면 하드코딩을 먼저 Firebase로 마이그레이션
+  if (!dbMenus || dbMenus.length === 0) {
+    const defaults = [
+      ...MENUS.both.map((m,i)=>({...m,type:'both',order:i+1})),
+      ...MENUS.ice.map((m,i)=>({...m,type:'ice',order:100+i})),
+      ...MENUS.hot.map((m,i)=>({...m,type:'hot',order:200+i})),
+    ];
+    for (const m of defaults) {
+      await addDoc(menusCol, { name:m.name, emoji:m.emoji, type:m.type, order:m.order });
+    }
+    showToast('⏳ 기본 메뉴를 저장 중... 잠시 후 다시 시도해주세요');
+    return;
+  }
+
+  try {
+    if (editKey && dbMenus.find(x=>x._id===editKey)) {
+      // 수정
+      await updateDoc(doc(db,'menus',editKey), { name, emoji, type });
+      showToast('✅ 메뉴가 수정됐어요!');
+    } else {
+      // 추가
+      const maxOrder = Math.max(0, ...getCurrentMenus().map(m=>m.order||0)) + 1;
+      await addDoc(menusCol, { name, emoji, type, order: maxOrder });
+      showToast('✅ 메뉴가 추가됐어요!');
+    }
+    cancelMenuEdit();
+  } catch(e) { alert('저장 실패: '+e.message); }
+};
+
+// 삭제
+window.deleteMenuEntry = async function(key, name) {
+  if (!confirm(`"${name}" 메뉴를 삭제할까요?`)) return;
+
+  // DB에 없으면 먼저 마이그레이션
+  if (!dbMenus || dbMenus.length === 0) {
+    const defaults = [
+      ...MENUS.both.map((m,i)=>({...m,type:'both',order:i+1})),
+      ...MENUS.ice.map((m,i)=>({...m,type:'ice',order:100+i})),
+      ...MENUS.hot.map((m,i)=>({...m,type:'hot',order:200+i})),
+    ];
+    for (const m of defaults) {
+      await addDoc(menusCol, { name:m.name, emoji:m.emoji, type:m.type, order:m.order });
+    }
+    showToast('⏳ 기본 메뉴 저장 중... 잠시 후 다시 삭제해주세요');
+    return;
+  }
+  try {
+    await deleteDoc(doc(db,'menus',key));
+    showToast(`🗑 "${name}" 삭제됐어요.`);
+  } catch(e) { alert('삭제 실패: '+e.message); }
+};
+
 // ── 재고 관리 ──
 let stockData = {}; // { 메뉴명: { qty, unlimited } }
 
@@ -1434,13 +1658,9 @@ onSnapshot(stockCol, snapshot => {
   renderStockList();
 });
 
-// 전체 메뉴 목록 (MENUS 기반)
+// 전체 메뉴 목록 (DB 있으면 DB, 없으면 하드코딩)
 function getAllMenuList() {
-  return [
-    ...MENUS.both.map(m=>({...m,type:'both'})),
-    ...MENUS.ice.map(m=>({...m,type:'ice'})),
-    ...MENUS.hot.map(m=>({...m,type:'hot'})),
-  ];
+  return getCurrentMenus();
 }
 
 // 재고 목록 렌더링
@@ -1543,16 +1763,19 @@ function renderStats(){
   if(sv||ev) data=data.filter(o=>(!sv||o.date>=sv)&&(!ev||o.date<=ev));
   if(data.length===0){['chart-menu','chart-time','chart-cup'].forEach(id=>{document.getElementById(id).innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터가 없어요</div>`;});return;}
 
-  // ── 메뉴별 통계 (HOT/ICE 구별, MENUS 순서 고정) ──
+  // ── 메뉴별 통계 (HOT/ICE 구별, 현재 메뉴 순서 고정) ──
+  const currentMenus = getCurrentMenus();
+  const menusByType = {
+    both: currentMenus.filter(m=>m.type==='both'),
+    ice:  currentMenus.filter(m=>m.type==='ice'),
+    hot:  currentMenus.filter(m=>m.type==='hot'),
+  };
   const typeNames = {both:'HOT·ICE 겸용', ice:'ICE 전용', hot:'HOT 전용'};
   const typeColors = {both:{hot:'#e05c3a',ice:'#0ea5e9'}, ice:{ice:'#0ea5e9'}, hot:{hot:'#e05c3a'}};
   let menuHtml = '';
   ['both','ice','hot'].forEach(type => {
-    const menus = MENUS[type];
-    const hasData = menus.some(m => {
-      if(type==='both') return data.some(o=>o.menu===m.name);
-      return data.some(o=>o.menu===m.name);
-    });
+    const menus = menusByType[type];
+    const hasData = menus.some(m => data.some(o=>o.menu===m.name));
     if(!hasData) return;
     menuHtml += `<div style="font-size:11px;font-weight:700;letter-spacing:1px;color:${Object.values(typeColors[type])[0]};margin:12px 0 6px;">${typeNames[type].toUpperCase()}</div>`;
     menus.forEach(m => {
