@@ -489,8 +489,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             </div>
             <div>
               <label style="font-size:11px;color:var(--text-muted);font-weight:500;">이모지</label>
-              <input type="text" id="mf-emoji" placeholder="🍯" maxlength="2"
-                style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:18px;text-align:center;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+              <!-- 이모지 피커 -->
+              <div style="position:relative;margin-top:4px;">
+                <div id="mf-emoji-display" onclick="toggleEmojiPicker()"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:22px;text-align:center;cursor:pointer;user-select:none;">
+                  ☕
+                </div>
+                <input type="hidden" id="mf-emoji" value="☕">
+                <!-- 드롭다운 -->
+                <div id="emoji-picker" style="display:none;position:absolute;top:44px;right:0;z-index:999;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;width:220px;box-shadow:0 8px 24px rgba(37,99,235,.15);">
+                  <div id="emoji-picker-inner"></div>
+                </div>
+              </div>
             </div>
           </div>
           <div style="margin-bottom:10px;">
@@ -1464,6 +1474,52 @@ function renderAdmin(){
     </div>`).join('');
 }
 
+// ── 이모지 피커 ──
+const EMOJI_LIST = {
+  '☕ 음료': ['☕','🍵','🧋','🥤','🍺','🧃','🍹','🥛','🍶','🫖'],
+  '🍰 디저트': ['🍰','🎂','🍩','🍪','🍫','🍬','🍭','🧁','🍦','🍧'],
+  '🍎 과일': ['🍎','🍋','🍓','🍇','🍊','🍑','🍒','🍌','🍍','🥭'],
+  '🌿 자연': ['🌿','🌰','🌾','🌸','🍀','🍂','🌻','🌱','🌵','🌴'],
+  '✨ 기타': ['✨','⭐','💎','🔥','❄️','💧','🎯','🎁','🎀','💫'],
+};
+
+function buildEmojiPicker() {
+  const inner = document.getElementById('emoji-picker-inner');
+  if (!inner || inner.children.length > 0) return;
+  let html = '';
+  Object.entries(EMOJI_LIST).forEach(([cat, emojis]) => {
+    html += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);margin:8px 0 4px;letter-spacing:.5px;">${cat}</div>`;
+    html += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">`;
+    emojis.forEach(e => {
+      html += `<button onclick="selectEmoji('${e}')" style="width:32px;height:32px;font-size:18px;border:none;background:var(--surface2);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;">${e}</button>`;
+    });
+    html += `</div>`;
+  });
+  inner.innerHTML = html;
+}
+
+window.toggleEmojiPicker = function() {
+  const picker = document.getElementById('emoji-picker');
+  if (!picker) return;
+  buildEmojiPicker();
+  picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+};
+
+window.selectEmoji = function(emoji) {
+  document.getElementById('mf-emoji').value = emoji;
+  document.getElementById('mf-emoji-display').textContent = emoji;
+  document.getElementById('emoji-picker').style.display = 'none';
+};
+
+// 피커 외부 클릭 시 닫기
+document.addEventListener('click', e => {
+  const picker = document.getElementById('emoji-picker');
+  const display = document.getElementById('mf-emoji-display');
+  if (picker && !picker.contains(e.target) && e.target !== display) {
+    picker.style.display = 'none';
+  }
+});
+
 // ── 메뉴 관리 (방법2: 하드코딩 기본값 + Firebase 덮어쓰기) ──
 // Firebase menus 컬렉션: { name, emoji, type, order }
 // 없으면 MENUS 하드코딩 그대로 사용 → 항상 메뉴 보임 보장
@@ -1561,6 +1617,7 @@ window.startMenuEdit = function(key) {
   if (!m) return;
   document.getElementById('mf-name').value = m.name;
   document.getElementById('mf-emoji').value = m.emoji;
+  document.getElementById('mf-emoji-display').textContent = m.emoji;
   document.getElementById('mf-editkey').value = key;
   document.getElementById('menu-form-title').textContent = '✏️ 메뉴 수정';
   // 분류 버튼 활성화
@@ -1576,7 +1633,9 @@ window.startMenuEdit = function(key) {
 // 취소
 window.cancelMenuEdit = function() {
   document.getElementById('mf-name').value='';
-  document.getElementById('mf-emoji').value='';
+  document.getElementById('mf-emoji').value='☕';
+  document.getElementById('mf-emoji-display').textContent='☕';
+  document.getElementById('emoji-picker').style.display='none';
   document.getElementById('mf-editkey').value='';
   document.getElementById('menu-form-title').textContent='➕ 새 메뉴 추가';
   document.querySelectorAll('.mf-type-btn').forEach((b,i) => {
