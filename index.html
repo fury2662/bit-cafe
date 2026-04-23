@@ -946,10 +946,34 @@ window.returnCup=function(){
   localStorage.setItem('bitcafe_returned',ret+1);updateCupStock(allOrders);
 };
 
-// ── 텔레그램 알림 ──
+// ── 텔레그램 중복 방지 (리더 탭만 전송) ──
+const BC = new BroadcastChannel('bitcafe_leader');
+let isLeader = false;
+let leaderTimeout = null;
+
+function claimLeader() {
+  isLeader = true;
+  clearTimeout(leaderTimeout);
+  leaderTimeout = setTimeout(() => { isLeader = false; }, 5000);
+  BC.postMessage('alive');
+}
+
+BC.onmessage = (e) => {
+  if (e.data === 'alive') {
+    isLeader = false;
+    clearTimeout(leaderTimeout);
+  }
+  if (e.data === 'claim') claimLeader();
+};
+
+// 처음 리더 자임 시도
+setTimeout(() => { BC.postMessage('claim'); claimLeader(); }, 300 + Math.random() * 200);
+// 주기적으로 리더 유지
+setInterval(() => { if (isLeader) { BC.postMessage('alive'); } }, 3000);
 const TG_TOKEN = '8052031047:AAH-Sg-61w-oTiu407wk62VBTB29dzMEjLQ';
 const TG_CHATS = ['8541660301', '8653000541']; // 관리자, 바리스타(서진)
 function sendTelegram(msg){
+  if (!isLeader) return; // 리더 탭만 전송
   TG_CHATS.forEach(chatId => {
     fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
       method:'POST',
