@@ -331,7 +331,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div class="option-row">
             <div class="option-label">컵 선택</div>
             <div class="option-chips">
-              <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
+              <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
               <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
             </div>
             <div id="cup-warn" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
@@ -386,7 +386,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="option-row">
           <div class="option-label">컵 선택</div>
           <div class="option-chips">
-            <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-pc" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
+            <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-pc" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
             <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
           </div>
           <div id="cup-warn-pc" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
@@ -690,7 +690,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div class="option-row">
             <div class="option-label">컵 선택</div>
             <div class="option-chips">
-              <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
+              <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
               <div class="chip" data-group="dcup" onclick="selectChip(this)">♻️ 개인컵</div>
             </div>
             <div id="cup-warn-d" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
@@ -759,7 +759,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="option-row">
           <div class="option-label">컵 선택</div>
           <div class="option-chips">
-            <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d-pc" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
+            <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d-pc" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
             <div class="chip" data-group="dcup" onclick="selectChip(this)">♻️ 개인컵</div>
           </div>
           <div id="cup-warn-d-pc" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
@@ -810,7 +810,32 @@ const stockCol  = collection(db,'stock'); // 메뉴별 재고
 const ADMIN_PW       = '1234';
 const ADMIN_PW_SUPER = '9876';
 let isSuper = false;
-let TOTAL_CUPS = parseInt(localStorage.getItem('bitcafe_total_cups') || '10');
+let TOTAL_CUPS = 10;
+
+// Firebase에서 공용컵 총 개수 로드
+async function loadTotalCups() {
+  try {
+    const snap = await getDoc(doc(db,'settings','totalCups'));
+    if (snap.exists()) TOTAL_CUPS = snap.data().value ?? 10;
+  } catch(e) {}
+  const inp = document.getElementById('cup-total-input');
+  const lbl = document.getElementById('cup-total-label');
+  if(inp) inp.value = TOTAL_CUPS;
+  if(lbl) lbl.textContent = `초기 재고 ${TOTAL_CUPS}개`;
+  updateCupStock(allOrders);
+}
+
+// ── 공용컵 총 개수 설정 ──
+window.setCupTotal = async function(val) {
+  const n = Math.max(0, Math.min(100, parseInt(val) || 0));
+  TOTAL_CUPS = n;
+  try { await setDoc(doc(db,'settings','totalCups'), { value: n }); } catch(e) {}
+  document.getElementById('cup-total-input').value = n;
+  const label = document.getElementById('cup-total-label');
+  if (label) label.textContent = `초기 재고 ${n}개`;
+  updateCupStock(allOrders);
+};
+
 let selectedMenu = null;
 let allOrders    = [];
 let currentFilter = 'all';
@@ -818,19 +843,11 @@ let isFirstLoad  = true;
 let prevStatuses = {};
 let currentUser  = localStorage.getItem('bitcafe_username') || '';
 
-// ── 공용컵 총 개수 설정 ──
-window.setCupTotal = function(val) {
-  const n = Math.max(0, Math.min(100, parseInt(val) || 0));
-  TOTAL_CUPS = n;
-  localStorage.setItem('bitcafe_total_cups', n);
-  document.getElementById('cup-total-input').value = n;
-  const label = document.getElementById('cup-total-label');
-  if (label) label.textContent = `초기 재고 ${n}개`;
-  updateCupStock(allOrders);
-};
-
 // ── PC 판별 ──
 const isPC = () => window.innerWidth >= 1024;
+
+// 공용컵 총 개수 로드
+loadTotalCups();
 
 // ── 페이지 이동 ──
 window.showPage = function(page) {
@@ -966,7 +983,18 @@ function updateCupStock(orders){
   const used=orders.filter(o=>(o.cup||'').includes('공용')).length;
   const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
   const out=Math.max(0,used-ret),rem=Math.max(0,TOTAL_CUPS-out),pct=Math.round(rem/TOTAL_CUPS*100);
-  ['cup-badge','cup-badge-pc','cup-badge-d','cup-badge-d-pc'].forEach(id=>{const e=document.getElementById(id);if(!e)return;e.textContent=`${rem}개`;e.style.background=rem<=2?'rgba(239,68,68,.12)':rem<=4?'rgba(245,158,11,.12)':'rgba(37,99,235,.12)';e.style.color=rem<=2?'#ef4444':rem<=4?'#d97706':'#2563eb';});
+  ['cup-badge','cup-badge-pc','cup-badge-d','cup-badge-d-pc'].forEach(id=>{
+    const e=document.getElementById(id);if(!e)return;
+    e.textContent=`${rem}개`;
+    const chip=e.closest('.chip');
+    const isSelected=chip&&chip.classList.contains('selected');
+    if(isSelected){
+      e.style.background='rgba(255,255,255,.3)';e.style.color='#fff';
+    } else {
+      e.style.background=rem<=2?'rgba(239,68,68,.12)':rem<=4?'rgba(245,158,11,.12)':'rgba(37,99,235,.12)';
+      e.style.color=rem<=2?'#ef4444':rem<=4?'#d97706':'#2563eb';
+    }
+  });
   ['cup-warn','cup-warn-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=rem<=2?'block':'none';});
   const eR=document.getElementById('cup-remain');if(eR)eR.textContent=rem;
   const eO=document.getElementById('cup-out');if(eO)eO.textContent=out;
