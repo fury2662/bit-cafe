@@ -764,7 +764,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, getDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyAphNv8Gz1Qb2O5jXhnV99hKawmiICR4hA",
@@ -1472,10 +1472,14 @@ window.setFilter=function(btn){
 window.changeStatus=async function(fid,status){try{await updateDoc(doc(db,'orders',fid),{status});}catch(e){alert('변경 실패:'+e.message);}};
 window.clearAllOrders=async function(){
   if(!confirm('주문을 초기화할까요?\n(통계는 유지됩니다)'))return;
-  const ex=JSON.parse(localStorage.getItem('bitcafe_stats')||'[]');
-  localStorage.setItem('bitcafe_stats',JSON.stringify([...ex,...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||''}))]));
+  // 완료된 주문만 Firebase stats 컬렉션에 백업 저장 (취소 제외)
+  const statsCol = collection(db,'stats');
+  for(const o of allOrders.filter(o=>o.status==='완료')){
+    try{ await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',shot:o.shot||'',sweet:o.sweet||''}); }catch(e){}
+  }
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
   localStorage.setItem('bitcafe_returned','0');
+  showToast('✅ 주문이 초기화됐어요.');
 };
 
 function renderAdmin(){
@@ -1835,7 +1839,14 @@ async function decrementStock(menuName) {
 }
 
 // ── 통계 (HOT/ICE 구별, 메뉴 순서 고정) ──
-window.clearStats=function(){if(!confirm('통계를 초기화할까요?'))return;localStorage.removeItem('bitcafe_stats');renderStats();};
+window.clearStats=async function(){
+  if(!confirm('통계를 초기화할까요?\n삭제된 데이터는 복구할 수 없어요.'))return;
+  const statsCol = collection(db,'stats');
+  const snap = await getDocs(statsCol);
+  for(const d of snap.docs){ try{ await deleteDoc(doc(db,'stats',d.id)); }catch(e){} }
+  renderStats();
+  showToast('🗑 통계가 초기화됐어요.');
+};
 window.setDateRange=function(type){
   const today=new Date(),fmt=d=>d.toISOString().split('T')[0];let s='',e='';
   document.querySelectorAll('.date-shortcut').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');
@@ -1845,9 +1856,15 @@ window.setDateRange=function(type){
   else document.getElementById('stat-range-label').textContent='전체 기간';
   document.getElementById('stat-date-start').value=s;document.getElementById('stat-date-end').value=e;renderStats();
 };
-function renderStats(){
-  const saved=JSON.parse(localStorage.getItem('bitcafe_stats')||'[]');
-  let data=[...saved,...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||''}))];
+window.renderStats = async function renderStats(){
+  // Firebase stats(이전 주문 백업) + allOrders(현재 주문) 합산
+  let saved = [];
+  try {
+    const snap = await getDocs(collection(db,'stats'));
+    saved = snap.docs.map(d => d.data());
+  } catch(e) {}
+
+  let data = [...saved, ...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||''}))];
   const sv=document.getElementById('stat-date-start')?.value,ev=document.getElementById('stat-date-end')?.value;
   if(sv||ev) data=data.filter(o=>(!sv||o.date>=sv)&&(!ev||o.date<=ev));
   if(data.length===0){['chart-menu','chart-time','chart-cup'].forEach(id=>{document.getElementById(id).innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터가 없어요</div>`;});return;}
