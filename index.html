@@ -979,10 +979,11 @@ function updateSummary(){
 }
 
 // ── 공용컵 ──
-function updateCupStock(orders){
+async function updateCupStock(orders){
   const used=orders.filter(o=>(o.cup||'').includes('공용')).length;
-  const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
-  const out=Math.max(0,used-ret),rem=Math.max(0,TOTAL_CUPS-out),pct=Math.round(rem/TOTAL_CUPS*100);
+  let ret=0;
+  try{const snap=await getDoc(doc(db,'settings','cupReturned'));ret=parseInt(snap.data()?.value||0);}catch(e){}
+  const out=Math.max(0,used-ret),rem=Math.max(0,TOTAL_CUPS-out),pct=Math.round(rem/(TOTAL_CUPS||1)*100);
   ['cup-badge','cup-badge-pc','cup-badge-d','cup-badge-d-pc'].forEach(id=>{
     const e=document.getElementById(id);if(!e)return;
     e.textContent=`${rem}개`;
@@ -995,18 +996,19 @@ function updateCupStock(orders){
       e.style.color=rem<=2?'#ef4444':rem<=4?'#d97706':'#2563eb';
     }
   });
-  ['cup-warn','cup-warn-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=rem<=2?'block':'none';});
+  ['cup-warn','cup-warn-pc','cup-warn-d','cup-warn-d-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=rem<=2?'block':'none';});
   const eR=document.getElementById('cup-remain');if(eR)eR.textContent=rem;
   const eO=document.getElementById('cup-out');if(eO)eO.textContent=out;
   const eRt=document.getElementById('cup-returned');if(eRt)eRt.textContent=ret;
   const bar=document.getElementById('cup-bar');if(bar){bar.style.width=pct+'%';bar.className='cup-bar-fill'+(rem<=2?' danger':rem<=4?' warn':'');}
 }
-window.returnCup=function(){
+window.returnCup=async function(){
   const used=allOrders.filter(o=>(o.cup||'').includes('공용')).length;
-  const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
+  const retSnap=await getDoc(doc(db,'settings','cupReturned'));
+  const ret=parseInt(retSnap.data()?.value||0);
   if(ret>=used){showToast('⚠️ 회수할 컵이 없어요!','#f59e0b');return;}
   if(ret+1>TOTAL_CUPS){showToast('⚠️ 총 개수를 초과할 수 없어요!','#f59e0b');return;}
-  localStorage.setItem('bitcafe_returned',ret+1);updateCupStock(allOrders);
+  await setDoc(doc(db,'settings','cupReturned'),{value:ret+1});updateCupStock(allOrders);
 };
 
 // ── 텔레그램 중복 방지 (리더 탭만 전송) ──
@@ -1215,7 +1217,8 @@ window.placeDelivery = async function() {
   const cup = getDOption('dcup');
   if (cup.includes('공용')) {
     const used = allOrders.filter(o=>(o.cup||'').includes('공용')).length;
-    const ret = parseInt(localStorage.getItem('bitcafe_returned')||'0');
+    const retSnap=await getDoc(doc(db,'settings','cupReturned'));
+    const ret=parseInt(retSnap.data()?.value||0);
     const rem = Math.max(0, TOTAL_CUPS - Math.max(0, used-ret));
     if (rem<=0) { showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444'); return; }
   }
@@ -1386,7 +1389,7 @@ window.placeOrder=async function(){
   const cup=getOption('cup');
   if(cup.includes('공용')){
     const used=allOrders.filter(o=>(o.cup||'').includes('공용')).length;
-    const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
+    const retSnap3=await getDoc(doc(db,'settings','cupReturned'));const ret=parseInt(retSnap3.data()?.value||0);
     const rem=Math.max(0,TOTAL_CUPS-Math.max(0,used-ret));
     if(rem<=0){showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444');return;}
   }
@@ -1553,7 +1556,7 @@ window.clearAllOrders=async function(){
     try{ await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',shot:o.shot||'',sweet:o.sweet||''}); }catch(e){}
   }
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
-  localStorage.setItem('bitcafe_returned','0');
+  try{await setDoc(doc(db,'settings','cupReturned'),{value:0});}catch(e){}
   showToast('✅ 주문이 초기화됐어요.');
 };
 
