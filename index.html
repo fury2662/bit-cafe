@@ -856,6 +856,12 @@ let isFirstLoad  = true;
 let prevStatuses = {};
 let currentUser  = localStorage.getItem('bitcafe_username') || '';
 
+// ── 로컬 날짜 ──
+function getLocalDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 // ── PC 판별 ──
 const isPC = () => window.innerWidth >= 1024;
 
@@ -1248,7 +1254,7 @@ window.placeDelivery = async function() {
       shot:getDOption('dshot'), sweet:getDOption('dsweet'), cup,
       delivery:true, location,
       time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
-      date:new Date().toISOString().split('T')[0],
+      date:getLocalDate(),
       timestamp:Date.now(), status:'주문확인중'
     });
     await decrementStock(selectedDeliveryMenu.name);
@@ -1417,7 +1423,7 @@ window.placeOrder=async function(){
       temp:selectedMenu.type==='ice'?'🧊 ICE':selectedMenu.type==='hot'?'🔥 HOT':(getOption('temp')||'🔥 HOT'),
       shot:getOption('shot'),sweet:getOption('sweet'),cup,
       time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
-      date:new Date().toISOString().split('T')[0],timestamp:Date.now(),status:'주문확인중'});
+      date:getLocalDate(),timestamp:Date.now(),status:'주문확인중'});
     await decrementStock(selectedMenu.name);
     document.querySelectorAll('.menu-card').forEach(c=>c.classList.remove('selected'));
     selectedMenu=null;
@@ -1533,11 +1539,11 @@ function renderHistory(){
   let mine=allOrders.filter(o=>o.name===user);
 
   // 기간 필터 적용
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDate();
   if(historyFilter==='today') mine=mine.filter(o=>o.date===today);
   else if(historyFilter==='week'){
     const d=new Date(); d.setDate(d.getDate()-7);
-    const w=d.toISOString().split('T')[0];
+    const w=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     mine=mine.filter(o=>o.date>=w);
   }
   else if(historyFilter==='month'){
@@ -1588,9 +1594,9 @@ function renderHistoryWithData(orders) {
   const user=localStorage.getItem('bitcafe_username')||'';
   let mine=orders.filter(o=>o.name===user);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDate();
   if(historyFilter==='today') mine=mine.filter(o=>o.date===today);
-  else if(historyFilter==='week'){const d=new Date();d.setDate(d.getDate()-7);mine=mine.filter(o=>o.date>=d.toISOString().split('T')[0]);}
+  else if(historyFilter==='week'){const d=new Date();d.setDate(d.getDate()-7);const w=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;mine=mine.filter(o=>o.date>=w);}
   else if(historyFilter==='month'){mine=mine.filter(o=>o.date&&o.date.startsWith(today.slice(0,7)));}
   else if(historyFilter==='custom'){
     if(historyDateStart) mine=mine.filter(o=>o.date>=historyDateStart);
