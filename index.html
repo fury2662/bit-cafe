@@ -1501,12 +1501,30 @@ window.setHistoryFilter = function(btn, filter) {
   document.querySelectorAll('[data-hfilter]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   historyFilter = filter;
-  historyDateStart = '';
-  historyDateEnd = '';
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const todayStr = fmt(now);
+
+  let s = '', e = '';
+  if (filter === 'today') { s = todayStr; e = todayStr; }
+  else if (filter === 'week') {
+    const w = new Date(now); w.setDate(now.getDate()-7);
+    s = fmt(w); e = todayStr;
+  }
+  else if (filter === 'month') {
+    s = `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
+    e = todayStr;
+  }
+
   const ds = document.getElementById('history-date-start');
   const de = document.getElementById('history-date-end');
-  if(ds) ds.value = '';
-  if(de) de.value = '';
+  if(ds) ds.value = s;
+  if(de) de.value = e;
+  historyDateStart = s;
+  historyDateEnd = e;
+
   loadAndRenderHistory();
 };
 
