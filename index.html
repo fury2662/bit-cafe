@@ -2088,7 +2088,8 @@ function renderStockList() {
           </div>
           <div style="display:flex;align-items:center;gap:4px;">
             <button onclick="adjustStock('${m.name}',-1)" ${isUnlimited?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;${isUnlimited?'opacity:.4':''}">−</button>
-            <input type="number" value="${isUnlimited?'∞':qty}" ${isUnlimited?'disabled':''}
+            <input type="number" value="${isUnlimited?'':qty}" ${isUnlimited?'disabled':''}
+              placeholder="${isUnlimited?'∞':''}"
               onchange="setStockQty('${m.name}',this.value)"
               style="width:52px;text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;${isUnlimited?'opacity:.4':''}">
             <button onclick="adjustStock('${m.name}',1)" ${isUnlimited?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;${isUnlimited?'opacity:.4':''}">＋</button>
