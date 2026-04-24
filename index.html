@@ -409,7 +409,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="page-header">
       <span class="logo-icon">📋</span>
       <h1>주문 내역</h1>
-      <p>오늘 주문한 커피 목록</p>
+      <p>내 주문 내역</p>
+    </div>
+    <!-- 기간 조회 -->
+    <div style="padding:10px 4px 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <button class="filter-btn active" data-hfilter="all" onclick="setHistoryFilter(this,'all')">전체</button>
+      <button class="filter-btn" data-hfilter="today" onclick="setHistoryFilter(this,'today')">오늘</button>
+      <button class="filter-btn" data-hfilter="week" onclick="setHistoryFilter(this,'week')">이번 주</button>
+      <button class="filter-btn" data-hfilter="month" onclick="setHistoryFilter(this,'month')">이번 달</button>
+      <div style="display:flex;align-items:center;gap:4px;margin-left:auto;">
+        <input type="date" id="history-date-start" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:11px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;">
+        <span style="font-size:11px;color:var(--text-muted);">~</span>
+        <input type="date" id="history-date-end" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:11px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;">
+        <button onclick="applyHistoryDateFilter()" style="padding:4px 10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:11px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;">조회</button>
+      </div>
     </div>
     <div class="order-list" id="order-list">
       <div class="empty-state"><span class="big-icon">🫗</span><p>아직 주문 내역이 없어요</p></div>
@@ -857,6 +870,7 @@ window.showPage = function(page) {
   document.getElementById('nav-'+page).classList.add('active');
   hideBadge(page);
   if (page==='admin') renderAdmin();
+  if (page==='history') loadAndRenderHistory();
   if (page==='message') {
     const saved = localStorage.getItem('bitcafe_username') || '';
     const el = document.getElementById('msg-name');
@@ -1438,8 +1452,8 @@ unsubscribe = onSnapshot(q,snapshot=>{
       }
       if(change.type==='modified'){
         if(prev!=='제조중'&&o.status==='제조중') sendTelegram(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);
-        if(prev!=='완료'&&o.status==='완료') sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`);
-        if(prev!=='취소'&&o.status==='취소') sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`);
+        if(prev!=='완료'&&o.status==='완료') { sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`); saveToHistory(o); }
+        if(prev!=='취소'&&o.status==='취소') { sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`); saveToHistory(o); }
       }
 
       // 앱 내 알림 (로그인 상태에 따라)
@@ -1472,11 +1486,70 @@ unsubscribe = onSnapshot(q,snapshot=>{
 function sCls(s){return s==='주문확인중'?'status-s0':s==='제조중'?'status-s1':s==='완료'?'status-s2':s==='취소'?'status-s3':'status-s0';}
 
 // ── 주문내역 ──
+// ── 주문내역 기간 필터 ──
+let historyFilter = 'all';
+let historyDateStart = '';
+let historyDateEnd = '';
+
+window.setHistoryFilter = function(btn, filter) {
+  document.querySelectorAll('[data-hfilter]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  historyFilter = filter;
+  historyDateStart = ''; historyDateEnd = '';
+  document.getElementById('history-date-start').value = '';
+  document.getElementById('history-date-end').value = '';
+  renderHistory();
+};
+
+window.applyHistoryDateFilter = function() {
+  const s = document.getElementById('history-date-start')?.value;
+  const e = document.getElementById('history-date-end')?.value;
+  historyFilter = 'custom';
+  historyDateStart = s; historyDateEnd = e;
+  document.querySelectorAll('[data-hfilter]').forEach(b=>b.classList.remove('active'));
+  renderHistory();
+};
+
+// 주문내역 영구 저장 (완료/취소 시 history 컬렉션에 저장)
+const historyCol = collection(db,'history');
+async function saveToHistory(o) {
+  const user = localStorage.getItem('bitcafe_username')||'';
+  if (!user) return;
+  try {
+    await addDoc(historyCol, {
+      name:o.name, menu:o.menu, emoji:o.emoji||'☕',
+      temp:o.temp||'', shot:o.shot||'', sweet:o.sweet||'', cup:o.cup||'',
+      delivery:o.delivery||false, location:o.location||'',
+      status:o.status, time:o.time||'', date:o.date||'',
+      timestamp:o.timestamp||Date.now()
+    });
+  } catch(e) {}
+}
+
 function renderHistory(){
   const list=document.getElementById('order-list');
+  if(!list) return;
   const user=localStorage.getItem('bitcafe_username')||'';
-  const mine=allOrders.filter(o=>o.name===user);
-  if(mine.length===0){list.innerHTML=`<div class="empty-state"><span class="big-icon">🫗</span><p>${user?'아직 주문 내역이 없어요':'먼저 이름을 입력하고 주문해주세요!'}</p></div>`;return;}
+  let mine=allOrders.filter(o=>o.name===user);
+
+  // 기간 필터 적용
+  const today = new Date().toISOString().split('T')[0];
+  if(historyFilter==='today') mine=mine.filter(o=>o.date===today);
+  else if(historyFilter==='week'){
+    const d=new Date(); d.setDate(d.getDate()-7);
+    const w=d.toISOString().split('T')[0];
+    mine=mine.filter(o=>o.date>=w);
+  }
+  else if(historyFilter==='month'){
+    const m=today.slice(0,7);
+    mine=mine.filter(o=>o.date&&o.date.startsWith(m));
+  }
+  else if(historyFilter==='custom'){
+    if(historyDateStart) mine=mine.filter(o=>o.date>=historyDateStart);
+    if(historyDateEnd)   mine=mine.filter(o=>o.date<=historyDateEnd);
+  }
+
+  if(mine.length===0){list.innerHTML=`<div class="empty-state"><span class="big-icon">🫗</span><p>${user?'해당 기간 주문 내역이 없어요':'먼저 이름을 입력하고 주문해주세요!'}</p></div>`;return;}
   list.innerHTML=mine.map(o=>`
     <div class="order-item">
       <span class="order-item-emoji">${o.emoji}</span>
@@ -1486,13 +1559,59 @@ function renderHistory(){
       </div>
       <div class="order-item-right">
         <span class="order-status ${sCls(o.status)}">${o.status}</span>
-        <div class="order-item-time">${o.time}</div>
+        <div class="order-item-time">${o.date||''} ${o.time||''}</div>
         ${o.status==='주문확인중'?`<button class="cancel-btn" onclick="cancelOrder('${o.firestoreId}')">취소</button>`:o.status!=='취소'&&o.status!=='완료'?`<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">이미 제조중</div>`:''}
       </div>
     </div>`).join('');
 }
 
-// ── 취소 ──
+// history 컬렉션 + allOrders 합산해서 렌더링
+async function loadAndRenderHistory() {
+  const user = localStorage.getItem('bitcafe_username')||'';
+  if (!user) { renderHistory(); return; }
+  try {
+    const snap = await getDocs(query(historyCol, orderBy('timestamp','desc')));
+    const histDocs = snap.docs.map(d=>({...d.data(), fromHistory:true}))
+      .filter(o=>o.name===user);
+    // allOrders에 없는 항목만 추가 (중복 방지)
+    const activeIds = new Set(allOrders.map(o=>o.timestamp));
+    const newItems = histDocs.filter(o=>!activeIds.has(o.timestamp));
+    // 임시로 합산해서 렌더링
+    const merged = [...allOrders, ...newItems].sort((a,b)=>b.timestamp-a.timestamp);
+    renderHistoryWithData(merged);
+  } catch(e) { renderHistory(); }
+}
+
+function renderHistoryWithData(orders) {
+  const list=document.getElementById('order-list');
+  if(!list) return;
+  const user=localStorage.getItem('bitcafe_username')||'';
+  let mine=orders.filter(o=>o.name===user);
+
+  const today = new Date().toISOString().split('T')[0];
+  if(historyFilter==='today') mine=mine.filter(o=>o.date===today);
+  else if(historyFilter==='week'){const d=new Date();d.setDate(d.getDate()-7);mine=mine.filter(o=>o.date>=d.toISOString().split('T')[0]);}
+  else if(historyFilter==='month'){mine=mine.filter(o=>o.date&&o.date.startsWith(today.slice(0,7)));}
+  else if(historyFilter==='custom'){
+    if(historyDateStart) mine=mine.filter(o=>o.date>=historyDateStart);
+    if(historyDateEnd)   mine=mine.filter(o=>o.date<=historyDateEnd);
+  }
+
+  if(mine.length===0){list.innerHTML=`<div class="empty-state"><span class="big-icon">🫗</span><p>${user?'해당 기간 주문 내역이 없어요':'먼저 이름을 입력하고 주문해주세요!'}</p></div>`;return;}
+  list.innerHTML=mine.map(o=>`
+    <div class="order-item">
+      <span class="order-item-emoji">${o.emoji||'☕'}</span>
+      <div class="order-item-info">
+        <div class="order-item-name">${o.menu}</div>
+        <div class="order-item-detail">${o.temp||''} · ${o.shot||''} · 당도:${o.sweet||''} · ${o.cup||''}${o.delivery?` · 🚚 ${o.location}`:''}</div>
+      </div>
+      <div class="order-item-right">
+        <span class="order-status ${sCls(o.status)}">${o.status}</span>
+        <div class="order-item-time">${o.date||''} ${o.time||''}</div>
+        ${!o.fromHistory&&o.status==='주문확인중'?`<button class="cancel-btn" onclick="cancelOrder('${o.firestoreId}')">취소</button>`:''}
+      </div>
+    </div>`).join('');
+}
 window.cancelOrder=async function(fid){
   const o=allOrders.find(x=>x.firestoreId===fid);if(!o)return;
   if(o.status!=='주문확인중'){showToast('❌ 이미 제조중이어서 취소가 불가능해요!','#ef4444');return;}
