@@ -1544,7 +1544,10 @@ function renderHistory(){
 
   // 기간 필터 적용
   const today = getLocalDate();
-  if(historyFilter==='today') mine=mine.filter(o=>o.date===today);
+  const _now2 = new Date();
+  const todayStart2 = new Date(_now2.getFullYear(), _now2.getMonth(), _now2.getDate()).getTime();
+  const todayEnd2 = todayStart2 + 86400000;
+  if(historyFilter==='today') mine=mine.filter(o=>o.timestamp>=todayStart2&&o.timestamp<todayEnd2);
   else if(historyFilter==='week'){
     const d=new Date(); d.setDate(d.getDate()-7);
     const w=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -1604,8 +1607,11 @@ function renderHistoryWithData(orders) {
   const monthStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
   const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
   const weekStr = `${weekAgo.getFullYear()}-${pad(weekAgo.getMonth()+1)}-${pad(weekAgo.getDate())}`;
+  // 오늘 자정 timestamp (로컬 기준)
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todayEnd   = todayStart + 86400000;
 
-  if(historyFilter==='today')   mine=mine.filter(o=>o.date===todayStr);
+  if(historyFilter==='today')   mine=mine.filter(o=>o.timestamp>=todayStart&&o.timestamp<todayEnd);
   else if(historyFilter==='week')  mine=mine.filter(o=>!!o.date&&o.date>=weekStr);
   else if(historyFilter==='month') mine=mine.filter(o=>!!o.date&&o.date.startsWith(monthStr));
   else if(historyFilter==='custom'){
