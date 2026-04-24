@@ -1501,19 +1501,23 @@ window.setHistoryFilter = function(btn, filter) {
   document.querySelectorAll('[data-hfilter]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   historyFilter = filter;
-  historyDateStart = ''; historyDateEnd = '';
-  document.getElementById('history-date-start').value = '';
-  document.getElementById('history-date-end').value = '';
-  renderHistory();
+  historyDateStart = '';
+  historyDateEnd = '';
+  const ds = document.getElementById('history-date-start');
+  const de = document.getElementById('history-date-end');
+  if(ds) ds.value = '';
+  if(de) de.value = '';
+  loadAndRenderHistory();
 };
 
 window.applyHistoryDateFilter = function() {
   const s = document.getElementById('history-date-start')?.value;
   const e = document.getElementById('history-date-end')?.value;
   historyFilter = 'custom';
-  historyDateStart = s; historyDateEnd = e;
+  historyDateStart = s||'';
+  historyDateEnd = e||'';
   document.querySelectorAll('[data-hfilter]').forEach(b=>b.classList.remove('active'));
-  renderHistory();
+  loadAndRenderHistory();
 };
 
 // 주문내역 영구 저장 (완료/취소 시 history 컬렉션에 저장)
@@ -1594,10 +1598,16 @@ function renderHistoryWithData(orders) {
   const user=localStorage.getItem('bitcafe_username')||'';
   let mine=orders.filter(o=>o.name===user);
 
-  const today = getLocalDate();
-  if(historyFilter==='today') mine=mine.filter(o=>o.date===today);
-  else if(historyFilter==='week'){const d=new Date();d.setDate(d.getDate()-7);const w=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;mine=mine.filter(o=>o.date>=w);}
-  else if(historyFilter==='month'){mine=mine.filter(o=>o.date&&o.date.startsWith(today.slice(0,7)));}
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const monthStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
+  const weekStr = `${weekAgo.getFullYear()}-${pad(weekAgo.getMonth()+1)}-${pad(weekAgo.getDate())}`;
+
+  if(historyFilter==='today')   mine=mine.filter(o=>o.date===todayStr);
+  else if(historyFilter==='week')  mine=mine.filter(o=>!!o.date&&o.date>=weekStr);
+  else if(historyFilter==='month') mine=mine.filter(o=>!!o.date&&o.date.startsWith(monthStr));
   else if(historyFilter==='custom'){
     if(historyDateStart) mine=mine.filter(o=>o.date>=historyDateStart);
     if(historyDateEnd)   mine=mine.filter(o=>o.date<=historyDateEnd);
