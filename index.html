@@ -482,7 +482,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <button class="filter-btn" data-filter="제조중" onclick="setFilter(this)">제조중</button>
           <button class="filter-btn" data-filter="완료" onclick="setFilter(this)">완료</button>
           <button class="filter-btn" data-filter="취소" onclick="setFilter(this)">취소</button>
-          <button class="filter-btn danger" onclick="clearAllOrders()" style="margin-left:auto;">🗑 초기화</button>
+          
         </div>
         <div id="admin-order-list"></div>
       </div>
@@ -991,7 +991,7 @@ function updateSummary(){
   const timeOk = isOrderTimeAvailable();
   const fmt=t=>{const[h,m]=t.split(':');const hh=parseInt(h);return`${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`;};
   ['order-btn','order-btn-pc'].forEach(id=>{const b=document.getElementById(id);if(!b)return;
-    if(!timeOk){b.disabled=true;b.textContent=`🚫 ${fmt(orderTimeStart)}~${fmt(orderTimeEnd)} 주문가능`;}
+    if(!timeOk){b.disabled=true;b.textContent=`🚫 ${getUnavailableReason()}`;}
     else if(pending>=5){b.disabled=true;b.textContent='⚠️ 주문 대기 중 (잠시 후 시도)';}
     else if(name){b.disabled=false;b.textContent=`${name}님 주문하기 →`;}
     else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}
@@ -1208,7 +1208,7 @@ function updateDeliverySummary() {
   const fmtT=t=>{const[h,m]=t.split(':');const hh=parseInt(h);return`${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`;};
   ['delivery-btn','delivery-btn-pc'].forEach(id=>{
     const b=document.getElementById(id); if(!b) return;
-    if(!timeOk){b.disabled=true;b.textContent=`🚫 ${fmtT(orderTimeStart)}~${fmtT(orderTimeEnd)} 주문가능`;}
+    if(!timeOk){b.disabled=true;b.textContent=`🚫 ${getUnavailableReason()}`;}
     else if(name){b.disabled=false;b.textContent=`${name}님 배달 주문하기 →`;}
     else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}
   });
@@ -1781,11 +1781,49 @@ window.saveOrderTime = async function() {
   } catch(err) { alert('저장 실패: '+err.message); }
 };
 
-// 현재 주문 가능 여부 체크
+// ── 주문 가능 여부 (시간 + 주말 + 공휴일) ──
+const HOLIDAYS = [
+  '01-01', // 신정
+  '03-01', // 삼일절
+  '05-05', // 어린이날
+  '06-06', // 현충일
+  '08-15', // 광복절
+  '10-03', // 개천절
+  '10-09', // 한글날
+  '12-25', // 크리스마스
+];
+// 음력 기반 공휴일 (매년 다름 - 2026년 기준)
+const LUNAR_HOLIDAYS_2026 = [
+  '01-28','01-29','01-30', // 설날 연휴
+  '05-25',                 // 부처님오신날
+  '09-24','09-25','09-26', // 추석 연휴
+];
+
+function isHoliday() {
+  const now = new Date();
+  const day = now.getDay(); // 0=일, 6=토
+  if (day === 0 || day === 6) return true; // 주말
+  const mmdd = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  if (HOLIDAYS.includes(mmdd)) return true;
+  if (LUNAR_HOLIDAYS_2026.includes(mmdd)) return true;
+  return false;
+}
+
 function isOrderTimeAvailable() {
+  if (isHoliday()) return false;
   const now = new Date();
   const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   return hhmm >= orderTimeStart && hhmm <= orderTimeEnd;
+}
+
+function getUnavailableReason() {
+  const now = new Date();
+  const day = now.getDay();
+  if (day === 0 || day === 6) return '주말에는 주문할 수 없어요';
+  const mmdd = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  if (HOLIDAYS.includes(mmdd) || LUNAR_HOLIDAYS_2026.includes(mmdd)) return '공휴일에는 주문할 수 없어요';
+  const fmt = t => { const [h,m]=t.split(':'); const hh=parseInt(h); return `${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`; };
+  return `주문 시간 아님  ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)}`;
 }
 
 // 주문 페이지 상단 배너 업데이트
@@ -1798,7 +1836,7 @@ function updateOrderTimeBanner() {
   const available = isOrderTimeAvailable();
   const msg = available
     ? `✅ 주문 가능  ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)}`
-    : `🚫 주문 시간 아님  ( ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)} )`;
+    : `🚫 ${getUnavailableReason()}`;
   const color  = available ? 'rgba(5,150,105,.08)'  : 'rgba(239,68,68,.07)';
   const border = available ? '#6ee7b7' : '#fca5a5';
   const textColor = available ? '#059669' : '#ef4444';
