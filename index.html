@@ -1649,9 +1649,26 @@ function renderHistoryWithData(orders) {
         <span class="order-status ${sCls(o.status)}">${o.status}</span>
         <div class="order-item-time">${o.date||''} ${o.time||''}</div>
         ${!o.fromHistory&&o.status==='주문확인중'?`<button class="cancel-btn" onclick="cancelOrder('${o.firestoreId}')">취소</button>`:''}
+        ${o.fromHistory||o.status==='완료'||o.status==='취소'?`<button onclick="deleteHistoryItem(${o.timestamp})" style="margin-top:5px;padding:3px 10px;background:none;border:1px solid var(--border);border-radius:12px;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗑 삭제</button>`:''}
       </div>
     </div>`).join('');
 }
+// history 개별 삭제
+window.deleteHistoryItem = async function(timestamp) {
+  if(!confirm('이 주문 내역을 삭제할까요?')) return;
+  try {
+    const snap = await getDocs(historyCol);
+    for(const d of snap.docs) {
+      if(d.data().timestamp === timestamp) {
+        await deleteDoc(doc(db,'history',d.id));
+        break;
+      }
+    }
+    showToast('🗑 주문 내역이 삭제됐어요.');
+    loadAndRenderHistory();
+  } catch(e) { alert('삭제 실패: '+e.message); }
+};
+
 window.cancelOrder=async function(fid){
   const o=allOrders.find(x=>x.firestoreId===fid);if(!o)return;
   if(o.status!=='주문확인중'){showToast('❌ 이미 제조중이어서 취소가 불가능해요!','#ef4444');return;}
@@ -1708,11 +1725,22 @@ window.setFilter=function(btn){
 };
 window.changeStatus=async function(fid,status){try{await updateDoc(doc(db,'orders',fid),{status});}catch(e){alert('변경 실패:'+e.message);}};
 window.clearAllOrders=async function(){
-  if(!confirm('주문을 초기화할까요?\n(통계는 유지됩니다)'))return;
-  // 완료된 주문만 Firebase stats 컬렉션에 백업 저장 (취소 제외)
+  if(!confirm('주문을 초기화할까요?\n(개인 주문내역과 통계는 유지됩니다)'))return;
+  // 모든 주문을 history + stats 컬렉션에 백업
   const statsCol = collection(db,'stats');
-  for(const o of allOrders.filter(o=>o.status==='완료')){
-    try{ await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',shot:o.shot||'',sweet:o.sweet||''}); }catch(e){}
+  for(const o of allOrders){
+    // history 백업 (개인 주문내역 보존)
+    try{ await addDoc(historyCol,{
+      name:o.name, menu:o.menu, emoji:o.emoji||'☕',
+      temp:o.temp||'', shot:o.shot||'', sweet:o.sweet||'', cup:o.cup||'',
+      delivery:o.delivery||false, location:o.location||'',
+      status:o.status, time:o.time||'', date:o.date||'',
+      timestamp:o.timestamp||Date.now()
+    }); }catch(e){}
+    // 완료 주문만 통계 백업
+    if(o.status==='완료'){
+      try{ await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',shot:o.shot||'',sweet:o.sweet||''}); }catch(e){}
+    }
   }
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
   try{await setDoc(doc(db,'settings','cupReturned'),{value:0});}catch(e){}
