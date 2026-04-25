@@ -482,7 +482,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <button class="filter-btn" data-filter="제조중" onclick="setFilter(this)">제조중</button>
           <button class="filter-btn" data-filter="완료" onclick="setFilter(this)">완료</button>
           <button class="filter-btn" data-filter="취소" onclick="setFilter(this)">취소</button>
-          
+          <button class="filter-btn danger" onclick="clearAllOrders()" style="margin-left:auto;">🗑 초기화</button>
         </div>
         <div id="admin-order-list"></div>
       </div>
