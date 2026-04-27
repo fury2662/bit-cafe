@@ -47,8 +47,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   /* 배너 전체 너비 */
   #order-time-banner{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
   #order-time-banner-d{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-  .pc-left{overflow-y:auto;padding:12px 14px 20px 24px;border-right:1px solid var(--border);}
-  .pc-right{display:flex!important;flex-direction:column;gap:8px;padding:20px 18px;overflow-y:auto;}
+  .pc-left{overflow-y:auto;padding:12px 14px 20px 24px;border-right:1px solid var(--border);grid-row:3;}
+  .pc-right{display:flex!important;flex-direction:column;gap:8px;padding:20px 18px;overflow-y:auto;grid-row:3;}
   .pc-right .order-btn-pc{margin-top:auto;}
   /* 메뉴 카드 PC */
   .pc-left .menu-grid{grid-template-columns:1fr 1fr 1fr!important;gap:5px;margin-bottom:6px;}
@@ -1031,34 +1031,12 @@ window.returnCup=async function(){
   await setDoc(doc(db,'settings','cupReturned'),{value:ret+1});updateCupStock(allOrders);
 };
 
-// ── 텔레그램 중복 방지 (리더 탭만 전송) ──
-const BC = new BroadcastChannel('bitcafe_leader');
-let isLeader = false;
-let leaderTimeout = null;
-
-function claimLeader() {
-  isLeader = true;
-  clearTimeout(leaderTimeout);
-  leaderTimeout = setTimeout(() => { isLeader = false; }, 5000);
-  BC.postMessage('alive');
-}
-
-BC.onmessage = (e) => {
-  if (e.data === 'alive') {
-    isLeader = false;
-    clearTimeout(leaderTimeout);
-  }
-  if (e.data === 'claim') claimLeader();
-};
-
-// 처음 리더 자임 시도
-setTimeout(() => { BC.postMessage('claim'); claimLeader(); }, 300 + Math.random() * 200);
-// 주기적으로 리더 유지
-setInterval(() => { if (isLeader) { BC.postMessage('alive'); } }, 3000);
+// ── 텔레그램 중복 방지 (처음 로드된 탭만 전송) ──
+const TG_SENT_KEY = 'bitcafe_tg_sent';
 const TG_TOKEN = '8052031047:AAH-Sg-61w-oTiu407wk62VBTB29dzMEjLQ';
 const TG_CHATS = ['8541660301', '8653000541']; // 관리자, 바리스타(서진)
+
 function sendTelegram(msg){
-  if (!isLeader) return; // 리더 탭만 전송
   TG_CHATS.forEach(chatId => {
     fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
       method:'POST',
@@ -1439,7 +1417,7 @@ window.placeOrder=async function(){
 };
 
 // ── 실시간 ──
-let unsubscribe = null;
+const sentTgIds = new Set(); // 이미 텔레그램 보낸 주문 ID 추적
 const q=query(ordersCol,orderBy('timestamp','desc'));
 if (unsubscribe) unsubscribe();
 unsubscribe = onSnapshot(q,snapshot=>{
@@ -1453,8 +1431,12 @@ unsubscribe = onSnapshot(q,snapshot=>{
       const prev=prevStatuses[o.firestoreId];
       // 텔레그램 알림 (항상 전송 - 로그인 무관)
       if(change.type==='added'){
-        const loc = o.delivery ? `\n🚚 배달 · 📍 ${o.location}` : '';
-        sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}${loc}`);
+        // 첫 로드 시 기존 주문은 알림 안 보냄
+        if(!isFirstLoad && !sentTgIds.has(o.firestoreId)){
+          sentTgIds.add(o.firestoreId);
+          const loc = o.delivery ? `\n🚚 배달 · 📍 ${o.location}` : '';
+          sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}${loc}`);
+        }
       }
       if(change.type==='modified'){
         if(prev!=='제조중'&&o.status==='제조중') sendTelegram(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);
