@@ -17,8 +17,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 20%,rgba(37,99,235,.1) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 10% 80%,rgba(14,165,233,.08) 0%,transparent 60%);pointer-events:none;z-index:0;}
 
 /* ── 모바일 기본 ── */
-.container{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 16px 95px;}
-.pc-right{display:none;}
+.container{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 16px 80px;}
 .mob-only{display:block;}
 .pc-only{display:none;}
 
@@ -39,16 +38,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   .container{width:1000px;height:840px;max-width:none;padding:0;margin:0;background:var(--bg);box-shadow:0 0 60px rgba(37,99,235,.2);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;}
   /* 주문 페이지 2단 그리드 */
   #page-order{display:none;}
-  #page-order.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto 30px 1fr;flex:1;overflow:hidden;}
+  #page-order.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto 1fr;flex:1;overflow:hidden;}
   #page-order .page-header{grid-column:1/-1;padding:14px 28px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);text-align:left;}
   #page-order .page-header .logo-icon{font-size:24px;display:inline;margin:0;animation:none;}
   #page-order .page-header h1{font-size:19px;}
   #page-order .page-header p{margin:0 0 0 6px;font-size:12px;}
-  /* 배너 전체 너비 */
-  #order-time-banner{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-  #order-time-banner-d{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-  .pc-left{overflow-y:auto;padding:12px 14px 20px 24px;border-right:1px solid var(--border);grid-row:3;}
-  .pc-right{display:flex!important;flex-direction:column;gap:8px;padding:20px 18px;overflow-y:auto;grid-row:3;}
+  .pc-left{overflow-y:auto;padding:12px 14px 20px 24px;border-right:1px solid var(--border);}
+  .pc-right{display:flex!important;flex-direction:column;gap:8px;padding:20px 18px;overflow-y:auto;}
   .pc-right .order-btn-pc{margin-top:auto;}
   /* 메뉴 카드 PC */
   .pc-left .menu-grid{grid-template-columns:1fr 1fr 1fr!important;gap:5px;margin-bottom:6px;}
@@ -63,7 +59,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   #page-history.active,#page-admin.active,#page-message.active{display:block!important;flex:1;overflow-y:auto;padding:24px 32px 20px;}
   /* 배달 페이지도 주문처럼 2단 */
   #page-delivery{display:none!important;}
-  #page-delivery.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto 30px 1fr;flex:1;overflow:hidden;}
+  #page-delivery.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto 1fr;flex:1;overflow:hidden;}
   #page-delivery .page-header{grid-column:1/-1;padding:14px 28px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);text-align:left;}
   #page-delivery .page-header .logo-icon{font-size:24px;display:inline;margin:0;animation:none;}
   #page-delivery .page-header h1{font-size:19px;}
@@ -73,7 +69,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   #page-history .page-header h1,#page-admin .page-header h1{font-size:20px;}
   #page-history .page-header p,#page-admin .page-header p{margin:0 0 0 6px;font-size:12px;}
   #page-order{display:none!important;}
-  #page-order.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto 30px 1fr;flex:1;overflow:hidden;}
+  #page-order.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto 1fr;flex:1;overflow:hidden;}
 }
 
 /* ── 헤더 ── */
@@ -278,9 +274,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <p>오늘도 맛있는 커피 한 잔 🤎</p>
     </div>
 
-    <!-- 운영시간 배너 -->
-    <div id="order-time-banner" style="display:none;"></div>
-
     <!-- 왼쪽(PC) / 전체(모바일): 이름 + 메뉴 + 모바일용 옵션 -->
     <div class="pc-left">
 
@@ -331,7 +324,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div class="option-row">
             <div class="option-label">컵 선택</div>
             <div class="option-chips">
-              <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
+              <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
               <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
             </div>
             <div id="cup-warn" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
@@ -350,7 +343,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
 
     <!-- 오른쪽: PC 전용 이름 + 옵션 + 요약 + 버튼 -->
-    <div class="pc-right">
+    <div class="pc-right" style="display:none;">
       <div class="name-section pc-only" style="margin-bottom:0;flex-shrink:0;">
         <label>이름</label>
         <input type="text" id="username-pc" placeholder="이름을 입력해주세요" maxlength="10">
@@ -386,7 +379,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="option-row">
           <div class="option-label">컵 선택</div>
           <div class="option-chips">
-            <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-pc" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
+            <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-pc" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
             <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
           </div>
           <div id="cup-warn-pc" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
@@ -409,20 +402,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="page-header">
       <span class="logo-icon">📋</span>
       <h1>주문 내역</h1>
-      <p>내 주문 내역</p>
-    </div>
-    <!-- 기간 조회 -->
-    <div style="padding:10px 4px 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <button class="filter-btn active" data-hfilter="all" onclick="setHistoryFilter(this,'all')">전체</button>
-      <button class="filter-btn" data-hfilter="today" onclick="setHistoryFilter(this,'today')">오늘</button>
-      <button class="filter-btn" data-hfilter="week" onclick="setHistoryFilter(this,'week')">이번 주</button>
-      <button class="filter-btn" data-hfilter="month" onclick="setHistoryFilter(this,'month')">이번 달</button>
-      <div style="display:flex;align-items:center;gap:4px;margin-left:auto;">
-        <input type="date" id="history-date-start" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:11px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;">
-        <span style="font-size:11px;color:var(--text-muted);">~</span>
-        <input type="date" id="history-date-end" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:11px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;">
-        <button onclick="applyHistoryDateFilter()" style="padding:4px 10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:11px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;">조회</button>
-      </div>
+      <p>오늘 주문한 커피 목록</p>
     </div>
     <div class="order-list" id="order-list">
       <div class="empty-state"><span class="big-icon">🫗</span><p>아직 주문 내역이 없어요</p></div>
@@ -545,24 +525,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
           <button class="filter-btn danger" onclick="clearStats()">🗑 통계 초기화</button>
         </div>
-
-        <!-- 운영 시간 설정 -->
-        <div class="cup-mgmt-card" style="margin-bottom:14px;">
-          <div class="cup-mgmt-title" style="margin-bottom:10px;">🕐 주문 가능 시간 설정</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-            <div>
-              <label style="font-size:11px;color:var(--text-muted);font-weight:500;">시작 시간</label>
-              <input type="time" id="order-time-start" value="07:30"
-                style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
-            </div>
-            <div>
-              <label style="font-size:11px;color:var(--text-muted);font-weight:500;">종료 시간</label>
-              <input type="time" id="order-time-end" value="16:50"
-                style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
-            </div>
-          </div>
-          <button onclick="saveOrderTime()" class="order-btn" style="padding:10px;font-size:13px;">⏰ 운영 시간 저장</button>
-        </div>
         <div class="date-filter-card">
           <div class="date-filter-title">📅 기간 조회</div>
           <div class="date-filter-row">
@@ -642,9 +604,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <p>자리까지 배달해드려요</p>
     </div>
 
-    <!-- 운영시간 배너 -->
-    <div id="order-time-banner-d" style="display:none;"></div>
-
     <!-- 왼쪽(PC) / 전체(모바일): 이름 + 메뉴 + 모바일용 옵션 -->
     <div class="pc-left">
 
@@ -703,7 +662,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div class="option-row">
             <div class="option-label">컵 선택</div>
             <div class="option-chips">
-              <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
+              <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
               <div class="chip" data-group="dcup" onclick="selectChip(this)">♻️ 개인컵</div>
             </div>
             <div id="cup-warn-d" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
@@ -722,7 +681,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
 
     <!-- 오른쪽: PC 전용 -->
-    <div class="pc-right">
+    <div class="pc-right" style="display:none;">
       <!-- 이름 -->
       <div class="name-section pc-only" style="margin-bottom:0;flex-shrink:0;">
         <label>이름</label>
@@ -772,7 +731,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="option-row">
           <div class="option-label">컵 선택</div>
           <div class="option-chips">
-            <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d-pc" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
+            <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d-pc" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
             <div class="chip" data-group="dcup" onclick="selectChip(this)">♻️ 개인컵</div>
           </div>
           <div id="cup-warn-d-pc" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
@@ -805,7 +764,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, getDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyAphNv8Gz1Qb2O5jXhnV99hKawmiICR4hA",
@@ -823,32 +782,7 @@ const stockCol  = collection(db,'stock'); // 메뉴별 재고
 const ADMIN_PW       = '1234';
 const ADMIN_PW_SUPER = '9876';
 let isSuper = false;
-let TOTAL_CUPS = 10;
-
-// Firebase에서 공용컵 총 개수 로드
-async function loadTotalCups() {
-  try {
-    const snap = await getDoc(doc(db,'settings','totalCups'));
-    if (snap.exists()) TOTAL_CUPS = snap.data().value ?? 10;
-  } catch(e) {}
-  const inp = document.getElementById('cup-total-input');
-  const lbl = document.getElementById('cup-total-label');
-  if(inp) inp.value = TOTAL_CUPS;
-  if(lbl) lbl.textContent = `초기 재고 ${TOTAL_CUPS}개`;
-  updateCupStock(allOrders);
-}
-
-// ── 공용컵 총 개수 설정 ──
-window.setCupTotal = async function(val) {
-  const n = Math.max(0, Math.min(100, parseInt(val) || 0));
-  TOTAL_CUPS = n;
-  try { await setDoc(doc(db,'settings','totalCups'), { value: n }); } catch(e) {}
-  document.getElementById('cup-total-input').value = n;
-  const label = document.getElementById('cup-total-label');
-  if (label) label.textContent = `초기 재고 ${n}개`;
-  updateCupStock(allOrders);
-};
-
+let TOTAL_CUPS = parseInt(localStorage.getItem('bitcafe_total_cups') || '10');
 let selectedMenu = null;
 let allOrders    = [];
 let currentFilter = 'all';
@@ -856,17 +790,19 @@ let isFirstLoad  = true;
 let prevStatuses = {};
 let currentUser  = localStorage.getItem('bitcafe_username') || '';
 
-// ── 로컬 날짜 ──
-function getLocalDate() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
+// ── 공용컵 총 개수 설정 ──
+window.setCupTotal = function(val) {
+  const n = Math.max(0, Math.min(100, parseInt(val) || 0));
+  TOTAL_CUPS = n;
+  localStorage.setItem('bitcafe_total_cups', n);
+  document.getElementById('cup-total-input').value = n;
+  const label = document.getElementById('cup-total-label');
+  if (label) label.textContent = `초기 재고 ${n}개`;
+  updateCupStock(allOrders);
+};
 
 // ── PC 판별 ──
 const isPC = () => window.innerWidth >= 1024;
-
-// 공용컵 총 개수 로드
-loadTotalCups();
 
 // ── 페이지 이동 ──
 window.showPage = function(page) {
@@ -876,7 +812,6 @@ window.showPage = function(page) {
   document.getElementById('nav-'+page).classList.add('active');
   hideBadge(page);
   if (page==='admin') renderAdmin();
-  if (page==='history') loadAndRenderHistory();
   if (page==='message') {
     const saved = localStorage.getItem('bitcafe_username') || '';
     const el = document.getElementById('msg-name');
@@ -988,54 +923,32 @@ function updateSummary(){
   if(document.getElementById('sum-detail-pc'))document.getElementById('sum-detail-pc').textContent=detail;
   // 버튼
   const pending=allOrders.filter(o=>o.status==='주문확인중'||o.status==='제조중').length;
-  const timeOk = isOrderTimeAvailable();
-  const fmt=t=>{const[h,m]=t.split(':');const hh=parseInt(h);return`${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`;};
-  ['order-btn','order-btn-pc'].forEach(id=>{const b=document.getElementById(id);if(!b)return;
-    if(!timeOk){b.disabled=true;b.textContent=`🚫 ${getUnavailableReason()}`;}
-    else if(pending>=5){b.disabled=true;b.textContent='⚠️ 주문 대기 중 (잠시 후 시도)';}
-    else if(name){b.disabled=false;b.textContent=`${name}님 주문하기 →`;}
-    else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}
-  });
+  ['order-btn','order-btn-pc'].forEach(id=>{const b=document.getElementById(id);if(!b)return;if(pending>=5){b.disabled=true;b.textContent='⚠️ 주문 대기 중 (잠시 후 시도)';}else if(name){b.disabled=false;b.textContent=`${name}님 주문하기 →`;}else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}});
 }
 
 // ── 공용컵 ──
-async function updateCupStock(orders){
+function updateCupStock(orders){
   const used=orders.filter(o=>(o.cup||'').includes('공용')).length;
-  let ret=0;
-  try{const snap=await getDoc(doc(db,'settings','cupReturned'));ret=parseInt(snap.data()?.value||0);}catch(e){}
-  const out=Math.max(0,used-ret),rem=Math.max(0,TOTAL_CUPS-out),pct=Math.round(rem/(TOTAL_CUPS||1)*100);
-  ['cup-badge','cup-badge-pc','cup-badge-d','cup-badge-d-pc'].forEach(id=>{
-    const e=document.getElementById(id);if(!e)return;
-    e.textContent=`${rem}개`;
-    const chip=e.closest('.chip');
-    const isSelected=chip&&chip.classList.contains('selected');
-    if(isSelected){
-      e.style.background='rgba(255,255,255,.3)';e.style.color='#fff';
-    } else {
-      e.style.background=rem<=2?'rgba(239,68,68,.12)':rem<=4?'rgba(245,158,11,.12)':'rgba(37,99,235,.12)';
-      e.style.color=rem<=2?'#ef4444':rem<=4?'#d97706':'#2563eb';
-    }
-  });
-  ['cup-warn','cup-warn-pc','cup-warn-d','cup-warn-d-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=rem<=2?'block':'none';});
+  const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
+  const out=Math.max(0,used-ret),rem=Math.max(0,TOTAL_CUPS-out),pct=Math.round(rem/TOTAL_CUPS*100);
+  ['cup-badge','cup-badge-pc','cup-badge-d','cup-badge-d-pc'].forEach(id=>{const e=document.getElementById(id);if(!e)return;e.textContent=`${rem}개`;e.style.background=rem<=2?'rgba(239,68,68,.12)':rem<=4?'rgba(245,158,11,.12)':'rgba(37,99,235,.12)';e.style.color=rem<=2?'#ef4444':rem<=4?'#d97706':'#2563eb';});
+  ['cup-warn','cup-warn-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=rem<=2?'block':'none';});
   const eR=document.getElementById('cup-remain');if(eR)eR.textContent=rem;
   const eO=document.getElementById('cup-out');if(eO)eO.textContent=out;
   const eRt=document.getElementById('cup-returned');if(eRt)eRt.textContent=ret;
   const bar=document.getElementById('cup-bar');if(bar){bar.style.width=pct+'%';bar.className='cup-bar-fill'+(rem<=2?' danger':rem<=4?' warn':'');}
 }
-window.returnCup=async function(){
+window.returnCup=function(){
   const used=allOrders.filter(o=>(o.cup||'').includes('공용')).length;
-  const retSnap=await getDoc(doc(db,'settings','cupReturned'));
-  const ret=parseInt(retSnap.data()?.value||0);
+  const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
   if(ret>=used){showToast('⚠️ 회수할 컵이 없어요!','#f59e0b');return;}
   if(ret+1>TOTAL_CUPS){showToast('⚠️ 총 개수를 초과할 수 없어요!','#f59e0b');return;}
-  await setDoc(doc(db,'settings','cupReturned'),{value:ret+1});updateCupStock(allOrders);
+  localStorage.setItem('bitcafe_returned',ret+1);updateCupStock(allOrders);
 };
 
-// ── 텔레그램 중복 방지 (처음 로드된 탭만 전송) ──
-const TG_SENT_KEY = 'bitcafe_tg_sent';
+// ── 텔레그램 알림 ──
 const TG_TOKEN = '8052031047:AAH-Sg-61w-oTiu407wk62VBTB29dzMEjLQ';
 const TG_CHATS = ['8541660301', '8653000541']; // 관리자, 바리스타(서진)
-
 function sendTelegram(msg){
   TG_CHATS.forEach(chatId => {
     fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
@@ -1182,12 +1095,9 @@ function updateDeliverySummary() {
   if(document.getElementById('delivery-sum-name-pc'))  document.getElementById('delivery-sum-name-pc').textContent=selectedDeliveryMenu.name;
   if(document.getElementById('delivery-sum-detail-pc')) document.getElementById('delivery-sum-detail-pc').textContent=detail;
   // 버튼
-  const timeOk = isOrderTimeAvailable();
-  const fmtT=t=>{const[h,m]=t.split(':');const hh=parseInt(h);return`${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`;};
   ['delivery-btn','delivery-btn-pc'].forEach(id=>{
     const b=document.getElementById(id); if(!b) return;
-    if(!timeOk){b.disabled=true;b.textContent=`🚫 ${getUnavailableReason()}`;}
-    else if(name){b.disabled=false;b.textContent=`${name}님 배달 주문하기 →`;}
+    if(name){b.disabled=false;b.textContent=`${name}님 배달 주문하기 →`;}
     else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}
   });
 }
@@ -1203,11 +1113,6 @@ window.placeDelivery = async function() {
   if (!name) { showToast('⚠️ 이름을 입력해주세요','#f59e0b'); return; }
   if (!location) { showToast('⚠️ 배달 위치를 입력해주세요','#f59e0b'); return; }
   if (!selectedDeliveryMenu) { showToast('⚠️ 메뉴를 선택해주세요','#f59e0b'); return; }
-  // 운영시간 체크
-  if(!isOrderTimeAvailable()){
-    const fmt=t=>{const[h,m]=t.split(':');const hh=parseInt(h);return`${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`;};
-    showToast(`🚫 주문 시간 아님  ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)}`,'#ef4444');return;
-  }
   // 대기 중인 주문 5개 이상이면 주문 차단
   const pending=allOrders.filter(o=>o.status==='주문확인중'||o.status==='제조중').length;
   if(pending>=5){showToast('⚠️ 주문이 밀려있어요! 잠시 후 다시 시도해주세요','#ef4444');return;}
@@ -1215,8 +1120,7 @@ window.placeDelivery = async function() {
   const cup = getDOption('dcup');
   if (cup.includes('공용')) {
     const used = allOrders.filter(o=>(o.cup||'').includes('공용')).length;
-    const retSnap=await getDoc(doc(db,'settings','cupReturned'));
-    const ret=parseInt(retSnap.data()?.value||0);
+    const ret = parseInt(localStorage.getItem('bitcafe_returned')||'0');
     const rem = Math.max(0, TOTAL_CUPS - Math.max(0, used-ret));
     if (rem<=0) { showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444'); return; }
   }
@@ -1232,7 +1136,7 @@ window.placeDelivery = async function() {
       shot:getDOption('dshot'), sweet:getDOption('dsweet'), cup,
       delivery:true, location,
       time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
-      date:getLocalDate(),
+      date:new Date().toISOString().split('T')[0],
       timestamp:Date.now(), status:'주문확인중'
     });
     await decrementStock(selectedDeliveryMenu.name);
@@ -1378,16 +1282,12 @@ function showNotify(type,title,desc){
 // ── 주문 ──
 window.placeOrder=async function(){
   const name=getName();if(!name||!selectedMenu)return;
-  if(!isOrderTimeAvailable()){
-    const fmt=t=>{const[h,m]=t.split(':');const hh=parseInt(h);return`${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`;};
-    showToast(`🚫 주문 시간 아님  ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)}`,'#ef4444');return;
-  }
   const pending=allOrders.filter(o=>o.status==='주문확인중'||o.status==='제조중').length;
   if(pending>=5){showToast('⚠️ 주문이 밀려있어요! 잠시 후 다시 시도해주세요','#ef4444');return;}
   const cup=getOption('cup');
   if(cup.includes('공용')){
     const used=allOrders.filter(o=>(o.cup||'').includes('공용')).length;
-    const retSnap3=await getDoc(doc(db,'settings','cupReturned'));const ret=parseInt(retSnap3.data()?.value||0);
+    const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
     const rem=Math.max(0,TOTAL_CUPS-Math.max(0,used-ret));
     if(rem<=0){showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444');return;}
   }
@@ -1401,7 +1301,7 @@ window.placeOrder=async function(){
       temp:selectedMenu.type==='ice'?'🧊 ICE':selectedMenu.type==='hot'?'🔥 HOT':(getOption('temp')||'🔥 HOT'),
       shot:getOption('shot'),sweet:getOption('sweet'),cup,
       time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
-      date:getLocalDate(),timestamp:Date.now(),status:'주문확인중'});
+      date:new Date().toISOString().split('T')[0],timestamp:Date.now(),status:'주문확인중'});
     await decrementStock(selectedMenu.name);
     document.querySelectorAll('.menu-card').forEach(c=>c.classList.remove('selected'));
     selectedMenu=null;
@@ -1417,7 +1317,7 @@ window.placeOrder=async function(){
 };
 
 // ── 실시간 ──
-const sentTgIds = new Set(); // 이미 텔레그램 보낸 주문 ID 추적
+let unsubscribe = null;
 const q=query(ordersCol,orderBy('timestamp','desc'));
 if (unsubscribe) unsubscribe();
 unsubscribe = onSnapshot(q,snapshot=>{
@@ -1431,17 +1331,13 @@ unsubscribe = onSnapshot(q,snapshot=>{
       const prev=prevStatuses[o.firestoreId];
       // 텔레그램 알림 (항상 전송 - 로그인 무관)
       if(change.type==='added'){
-        // 첫 로드 시 기존 주문은 알림 안 보냄
-        if(!isFirstLoad && !sentTgIds.has(o.firestoreId)){
-          sentTgIds.add(o.firestoreId);
-          const loc = o.delivery ? `\n🚚 배달 · 📍 ${o.location}` : '';
-          sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}${loc}`);
-        }
+        const loc = o.delivery ? `\n🚚 배달 · 📍 ${o.location}` : '';
+        sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}${loc}`);
       }
       if(change.type==='modified'){
         if(prev!=='제조중'&&o.status==='제조중') sendTelegram(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);
-        if(prev!=='완료'&&o.status==='완료') { sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`); saveToHistory(o); }
-        if(prev!=='취소'&&o.status==='취소') { sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`); saveToHistory(o); }
+        if(prev!=='완료'&&o.status==='완료') sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`);
+        if(prev!=='취소'&&o.status==='취소') sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`);
       }
 
       // 앱 내 알림 (로그인 상태에 따라)
@@ -1474,95 +1370,11 @@ unsubscribe = onSnapshot(q,snapshot=>{
 function sCls(s){return s==='주문확인중'?'status-s0':s==='제조중'?'status-s1':s==='완료'?'status-s2':s==='취소'?'status-s3':'status-s0';}
 
 // ── 주문내역 ──
-// ── 주문내역 기간 필터 ──
-let historyFilter = 'all';
-let historyDateStart = '';
-let historyDateEnd = '';
-
-window.setHistoryFilter = function(btn, filter) {
-  document.querySelectorAll('[data-hfilter]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  historyFilter = filter;
-
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const todayStr = fmt(now);
-
-  let s = '', e = '';
-  if (filter === 'today') { s = todayStr; e = todayStr; }
-  else if (filter === 'week') {
-    const w = new Date(now); w.setDate(now.getDate()-7);
-    s = fmt(w); e = todayStr;
-  }
-  else if (filter === 'month') {
-    s = `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
-    e = todayStr;
-  }
-
-  const ds = document.getElementById('history-date-start');
-  const de = document.getElementById('history-date-end');
-  if(ds) ds.value = s;
-  if(de) de.value = e;
-  historyDateStart = s;
-  historyDateEnd = e;
-
-  loadAndRenderHistory();
-};
-
-window.applyHistoryDateFilter = function() {
-  const s = document.getElementById('history-date-start')?.value;
-  const e = document.getElementById('history-date-end')?.value;
-  historyFilter = 'custom';
-  historyDateStart = s||'';
-  historyDateEnd = e||'';
-  document.querySelectorAll('[data-hfilter]').forEach(b=>b.classList.remove('active'));
-  loadAndRenderHistory();
-};
-
-// 주문내역 영구 저장 (완료/취소 시 history 컬렉션에 저장)
-const historyCol = collection(db,'history');
-async function saveToHistory(o) {
-  const user = localStorage.getItem('bitcafe_username')||'';
-  if (!user) return;
-  try {
-    await addDoc(historyCol, {
-      name:o.name, menu:o.menu, emoji:o.emoji||'☕',
-      temp:o.temp||'', shot:o.shot||'', sweet:o.sweet||'', cup:o.cup||'',
-      delivery:o.delivery||false, location:o.location||'',
-      status:o.status, time:o.time||'', date:o.date||'',
-      timestamp:o.timestamp||Date.now()
-    });
-  } catch(e) {}
-}
-
 function renderHistory(){
   const list=document.getElementById('order-list');
-  if(!list) return;
   const user=localStorage.getItem('bitcafe_username')||'';
-  let mine=allOrders.filter(o=>o.name===user);
-
-  // 기간 필터 적용
-  const today = getLocalDate();
-  const _now2 = new Date();
-  const todayStart2 = new Date(_now2.getFullYear(), _now2.getMonth(), _now2.getDate()).getTime();
-  const todayEnd2 = todayStart2 + 86400000;
-  if(historyFilter==='today') mine=mine.filter(o=>o.timestamp>=todayStart2&&o.timestamp<todayEnd2);
-  else if(historyFilter==='week'){
-    const d=new Date(); d.setDate(d.getDate()-7);
-    const w=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    mine=mine.filter(o=>o.date>=w);
-  }
-  else if(historyFilter==='month'){
-    const m=today.slice(0,7);
-    mine=mine.filter(o=>o.date&&o.date.startsWith(m));
-  }
-  else if(historyFilter==='custom'){
-    if(historyDateStart) mine=mine.filter(o=>o.date>=historyDateStart);
-    if(historyDateEnd)   mine=mine.filter(o=>o.date<=historyDateEnd);
-  }
-
-  if(mine.length===0){list.innerHTML=`<div class="empty-state"><span class="big-icon">🫗</span><p>${user?'해당 기간 주문 내역이 없어요':'먼저 이름을 입력하고 주문해주세요!'}</p></div>`;return;}
+  const mine=allOrders.filter(o=>o.name===user);
+  if(mine.length===0){list.innerHTML=`<div class="empty-state"><span class="big-icon">🫗</span><p>${user?'아직 주문 내역이 없어요':'먼저 이름을 입력하고 주문해주세요!'}</p></div>`;return;}
   list.innerHTML=mine.map(o=>`
     <div class="order-item">
       <span class="order-item-emoji">${o.emoji}</span>
@@ -1572,85 +1384,13 @@ function renderHistory(){
       </div>
       <div class="order-item-right">
         <span class="order-status ${sCls(o.status)}">${o.status}</span>
-        <div class="order-item-time">${o.date||''} ${o.time||''}</div>
+        <div class="order-item-time">${o.time}</div>
         ${o.status==='주문확인중'?`<button class="cancel-btn" onclick="cancelOrder('${o.firestoreId}')">취소</button>`:o.status!=='취소'&&o.status!=='완료'?`<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">이미 제조중</div>`:''}
       </div>
     </div>`).join('');
 }
 
-// history 컬렉션 + allOrders 합산해서 렌더링
-async function loadAndRenderHistory() {
-  const user = localStorage.getItem('bitcafe_username')||'';
-  if (!user) { renderHistory(); return; }
-  try {
-    const snap = await getDocs(query(historyCol, orderBy('timestamp','desc')));
-    const histDocs = snap.docs.map(d=>({...d.data(), fromHistory:true}))
-      .filter(o=>o.name===user);
-    // allOrders에 없는 항목만 추가 (중복 방지)
-    const activeIds = new Set(allOrders.map(o=>o.timestamp));
-    const newItems = histDocs.filter(o=>!activeIds.has(o.timestamp));
-    // 임시로 합산해서 렌더링
-    const merged = [...allOrders, ...newItems].sort((a,b)=>b.timestamp-a.timestamp);
-    renderHistoryWithData(merged);
-  } catch(e) { renderHistory(); }
-}
-
-function renderHistoryWithData(orders) {
-  const list=document.getElementById('order-list');
-  if(!list) return;
-  const user=localStorage.getItem('bitcafe_username')||'';
-  let mine=orders.filter(o=>o.name===user);
-
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
-  const monthStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
-  const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
-  const weekStr = `${weekAgo.getFullYear()}-${pad(weekAgo.getMonth()+1)}-${pad(weekAgo.getDate())}`;
-  // 오늘 자정 timestamp (로컬 기준)
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const todayEnd   = todayStart + 86400000;
-
-  if(historyFilter==='today')   mine=mine.filter(o=>o.timestamp>=todayStart&&o.timestamp<todayEnd);
-  else if(historyFilter==='week')  mine=mine.filter(o=>!!o.date&&o.date>=weekStr);
-  else if(historyFilter==='month') mine=mine.filter(o=>!!o.date&&o.date.startsWith(monthStr));
-  else if(historyFilter==='custom'){
-    if(historyDateStart) mine=mine.filter(o=>o.date>=historyDateStart);
-    if(historyDateEnd)   mine=mine.filter(o=>o.date<=historyDateEnd);
-  }
-
-  if(mine.length===0){list.innerHTML=`<div class="empty-state"><span class="big-icon">🫗</span><p>${user?'해당 기간 주문 내역이 없어요':'먼저 이름을 입력하고 주문해주세요!'}</p></div>`;return;}
-  list.innerHTML=mine.map(o=>`
-    <div class="order-item">
-      <span class="order-item-emoji">${o.emoji||'☕'}</span>
-      <div class="order-item-info">
-        <div class="order-item-name">${o.menu}</div>
-        <div class="order-item-detail">${o.temp||''} · ${o.shot||''} · 당도:${o.sweet||''} · ${o.cup||''}${o.delivery?` · 🚚 ${o.location}`:''}</div>
-      </div>
-      <div class="order-item-right">
-        <span class="order-status ${sCls(o.status)}">${o.status}</span>
-        <div class="order-item-time">${o.date||''} ${o.time||''}</div>
-        ${!o.fromHistory&&o.status==='주문확인중'?`<button class="cancel-btn" onclick="cancelOrder('${o.firestoreId}')">취소</button>`:''}
-        ${o.fromHistory||o.status==='완료'||o.status==='취소'?`<button onclick="deleteHistoryItem(${o.timestamp})" style="margin-top:5px;padding:3px 10px;background:none;border:1px solid var(--border);border-radius:12px;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗑 삭제</button>`:''}
-      </div>
-    </div>`).join('');
-}
-// history 개별 삭제
-window.deleteHistoryItem = async function(timestamp) {
-  if(!confirm('이 주문 내역을 삭제할까요?')) return;
-  try {
-    const snap = await getDocs(historyCol);
-    for(const d of snap.docs) {
-      if(d.data().timestamp === timestamp) {
-        await deleteDoc(doc(db,'history',d.id));
-        break;
-      }
-    }
-    showToast('🗑 주문 내역이 삭제됐어요.');
-    loadAndRenderHistory();
-  } catch(e) { alert('삭제 실패: '+e.message); }
-};
-
+// ── 취소 ──
 window.cancelOrder=async function(fid){
   const o=allOrders.find(x=>x.firestoreId===fid);if(!o)return;
   if(o.status!=='주문확인중'){showToast('❌ 이미 제조중이어서 취소가 불가능해요!','#ef4444');return;}
@@ -1707,26 +1447,11 @@ window.setFilter=function(btn){
 };
 window.changeStatus=async function(fid,status){try{await updateDoc(doc(db,'orders',fid),{status});}catch(e){alert('변경 실패:'+e.message);}};
 window.clearAllOrders=async function(){
-  if(!confirm('주문을 초기화할까요?\n(개인 주문내역과 통계는 유지됩니다)'))return;
-  // 모든 주문을 history + stats 컬렉션에 백업
-  const statsCol = collection(db,'stats');
-  for(const o of allOrders){
-    // history 백업 (개인 주문내역 보존)
-    try{ await addDoc(historyCol,{
-      name:o.name, menu:o.menu, emoji:o.emoji||'☕',
-      temp:o.temp||'', shot:o.shot||'', sweet:o.sweet||'', cup:o.cup||'',
-      delivery:o.delivery||false, location:o.location||'',
-      status:o.status, time:o.time||'', date:o.date||'',
-      timestamp:o.timestamp||Date.now()
-    }); }catch(e){}
-    // 완료 주문만 통계 백업
-    if(o.status==='완료'){
-      try{ await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',shot:o.shot||'',sweet:o.sweet||''}); }catch(e){}
-    }
-  }
+  if(!confirm('주문을 초기화할까요?\n(통계는 유지됩니다)'))return;
+  const ex=JSON.parse(localStorage.getItem('bitcafe_stats')||'[]');
+  localStorage.setItem('bitcafe_stats',JSON.stringify([...ex,...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||''}))]));
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
-  try{await setDoc(doc(db,'settings','cupReturned'),{value:0});}catch(e){}
-  showToast('✅ 주문이 초기화됐어요.');
+  localStorage.setItem('bitcafe_returned','0');
 };
 
 function renderAdmin(){
@@ -1754,129 +1479,6 @@ function renderAdmin(){
       </div>`}
     </div>`).join('');
 }
-
-// ── 주문 가능 시간 ──
-const ORDER_TIME_KEY = 'bitcafe_order_time';
-let orderTimeStart = '07:30';
-let orderTimeEnd   = '16:50';
-
-// Firebase에서 운영시간 로드
-async function loadOrderTime() {
-  try {
-    const snap = await getDoc(doc(db,'settings','orderTime'));
-    if (snap.exists()) {
-      orderTimeStart = snap.data().start || '07:30';
-      orderTimeEnd   = snap.data().end   || '16:50';
-    }
-  } catch(e) {}
-  // 관리자 UI 반영
-  const s = document.getElementById('order-time-start');
-  const e = document.getElementById('order-time-end');
-  if (s) s.value = orderTimeStart;
-  if (e) e.value = orderTimeEnd;
-  updateOrderTimeBanner();
-}
-loadOrderTime();
-
-// 운영시간 저장
-window.saveOrderTime = async function() {
-  const s = document.getElementById('order-time-start')?.value;
-  const e = document.getElementById('order-time-end')?.value;
-  if (!s || !e) return;
-  try {
-    await setDoc(doc(db,'settings','orderTime'), { start: s, end: e });
-    orderTimeStart = s; orderTimeEnd = e;
-    updateOrderTimeBanner();
-    showToast('✅ 운영 시간이 저장됐어요!');
-  } catch(err) { alert('저장 실패: '+err.message); }
-};
-
-// ── 주문 가능 여부 (시간 + 주말 + 공휴일) ──
-const HOLIDAYS = [
-  '01-01', // 신정
-  '03-01', // 삼일절
-  '05-05', // 어린이날
-  '06-06', // 현충일
-  '08-15', // 광복절
-  '10-03', // 개천절
-  '10-09', // 한글날
-  '12-25', // 크리스마스
-];
-// 음력 기반 공휴일 (매년 다름 - 2026년 기준)
-const LUNAR_HOLIDAYS_2026 = [
-  '01-28','01-29','01-30', // 설날 연휴
-  '05-25',                 // 부처님오신날
-  '09-24','09-25','09-26', // 추석 연휴
-];
-
-function isHoliday() {
-  const now = new Date();
-  const day = now.getDay(); // 0=일, 6=토
-  if (day === 0 || day === 6) return true; // 주말
-  const mmdd = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  if (HOLIDAYS.includes(mmdd)) return true;
-  if (LUNAR_HOLIDAYS_2026.includes(mmdd)) return true;
-  return false;
-}
-
-function isOrderTimeAvailable() {
-  if (isHoliday()) return false;
-  const now = new Date();
-  const hhmm = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-  return hhmm >= orderTimeStart && hhmm <= orderTimeEnd;
-}
-
-function getUnavailableReason() {
-  const now = new Date();
-  const day = now.getDay();
-  if (day === 0 || day === 6) return '주말에는 주문할 수 없어요';
-  const mmdd = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  if (HOLIDAYS.includes(mmdd) || LUNAR_HOLIDAYS_2026.includes(mmdd)) return '공휴일에는 주문할 수 없어요';
-  const fmt = t => { const [h,m]=t.split(':'); const hh=parseInt(h); return `${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`; };
-  return `주문 시간 아님  ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)}`;
-}
-
-// 주문 페이지 상단 배너 업데이트
-function updateOrderTimeBanner() {
-  const fmt = t => {
-    const [h, m] = t.split(':');
-    const hh = parseInt(h);
-    return `${hh < 12 ? '오전' : '오후'} ${hh <= 12 ? hh : hh-12}:${m}`;
-  };
-  const available = isOrderTimeAvailable();
-  const msg = available
-    ? `✅ 주문 가능  ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)}`
-    : `🚫 ${getUnavailableReason()}`;
-  const color  = available ? 'rgba(5,150,105,.08)'  : 'rgba(239,68,68,.07)';
-  const border = available ? '#6ee7b7' : '#fca5a5';
-  const textColor = available ? '#059669' : '#ef4444';
-
-  ['order-time-banner','order-time-banner-d'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = msg;
-    el.style.display = 'block';
-    el.style.padding = '7px 28px';
-    el.style.background = color;
-    el.style.borderBottom = `1px solid ${border}`;
-    el.style.borderTop = 'none';
-    el.style.borderLeft = 'none';
-    el.style.borderRight = 'none';
-    el.style.borderRadius = '0';
-    el.style.color = textColor;
-    el.style.fontSize = '12px';
-    el.style.fontWeight = '700';
-    el.style.textAlign = 'center';
-    el.style.whiteSpace = 'nowrap';
-    el.style.overflow = 'hidden';
-    el.style.textOverflow = 'ellipsis';
-    el.style.lineHeight = '1.4';
-    el.style.margin = '0';
-  });
-}
-
-// 매 분마다 배너 갱신
-setInterval(updateOrderTimeBanner, 30000);
 
 // ── 이모지 피커 ──
 const EMOJI_LIST = {
@@ -2160,8 +1762,7 @@ function renderStockList() {
           </div>
           <div style="display:flex;align-items:center;gap:4px;">
             <button onclick="adjustStock('${m.name}',-1)" ${isUnlimited?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;${isUnlimited?'opacity:.4':''}">−</button>
-            <input type="number" value="${isUnlimited?'':qty}" ${isUnlimited?'disabled':''}
-              placeholder="${isUnlimited?'∞':''}"
+            <input type="number" value="${isUnlimited?'∞':qty}" ${isUnlimited?'disabled':''}
               onchange="setStockQty('${m.name}',this.value)"
               style="width:52px;text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;${isUnlimited?'opacity:.4':''}">
             <button onclick="adjustStock('${m.name}',1)" ${isUnlimited?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;${isUnlimited?'opacity:.4':''}">＋</button>
@@ -2210,14 +1811,7 @@ async function decrementStock(menuName) {
 }
 
 // ── 통계 (HOT/ICE 구별, 메뉴 순서 고정) ──
-window.clearStats=async function(){
-  if(!confirm('통계를 초기화할까요?\n삭제된 데이터는 복구할 수 없어요.'))return;
-  const statsCol = collection(db,'stats');
-  const snap = await getDocs(statsCol);
-  for(const d of snap.docs){ try{ await deleteDoc(doc(db,'stats',d.id)); }catch(e){} }
-  renderStats();
-  showToast('🗑 통계가 초기화됐어요.');
-};
+window.clearStats=function(){if(!confirm('통계를 초기화할까요?'))return;localStorage.removeItem('bitcafe_stats');renderStats();};
 window.setDateRange=function(type){
   const today=new Date(),fmt=d=>d.toISOString().split('T')[0];let s='',e='';
   document.querySelectorAll('.date-shortcut').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');
@@ -2227,15 +1821,9 @@ window.setDateRange=function(type){
   else document.getElementById('stat-range-label').textContent='전체 기간';
   document.getElementById('stat-date-start').value=s;document.getElementById('stat-date-end').value=e;renderStats();
 };
-window.renderStats = async function renderStats(){
-  // Firebase stats(이전 주문 백업) + allOrders(현재 주문) 합산
-  let saved = [];
-  try {
-    const snap = await getDocs(collection(db,'stats'));
-    saved = snap.docs.map(d => d.data());
-  } catch(e) {}
-
-  let data = [...saved, ...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||''}))];
+function renderStats(){
+  const saved=JSON.parse(localStorage.getItem('bitcafe_stats')||'[]');
+  let data=[...saved,...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||''}))];
   const sv=document.getElementById('stat-date-start')?.value,ev=document.getElementById('stat-date-end')?.value;
   if(sv||ev) data=data.filter(o=>(!sv||o.date>=sv)&&(!ev||o.date<=ev));
   if(data.length===0){['chart-menu','chart-time','chart-cup'].forEach(id=>{document.getElementById(id).innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터가 없어요</div>`;});return;}
