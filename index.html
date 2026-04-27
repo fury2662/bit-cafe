@@ -1556,9 +1556,15 @@ async function saveToHistory(o) {
 window.deleteHistoryItem = async function(timestamp) {
   if(!confirm('이 주문 내역을 삭제할까요?')) return;
   try {
+    // 1. history 컬렉션에서 삭제
     const snap = await getDocs(historyCol);
     for(const d of snap.docs) {
       if(d.data().timestamp===timestamp){await deleteDoc(doc(db,'history',d.id));break;}
+    }
+    // 2. allOrders(orders 컬렉션)에 있는 항목이면 거기서도 삭제
+    const inOrders = allOrders.find(o=>o.timestamp===timestamp);
+    if(inOrders && inOrders.firestoreId){
+      await deleteDoc(doc(db,'orders',inOrders.firestoreId));
     }
     showToast('🗑 주문 내역이 삭제됐어요.');
     loadAndRenderHistory();
