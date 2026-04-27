@@ -1563,6 +1563,7 @@ window.applyHistoryDateFilter = function() {
 
 // ── 개인 주문내역 영구 보관 ──
 const historyCol = collection(db,'history');
+const deletedTimestamps = new Set();
 async function saveToHistory(o) {
   try {
     await addDoc(historyCol, {
@@ -1577,33 +1578,45 @@ async function saveToHistory(o) {
 
 window.deleteHistoryItem = async function(timestamp) {
   if(!confirm('이 주문 내역을 삭제할까요?')) return;
+  // 즉시 삭제 목록에 추가 (다시 살아나는 것 방지)
+  deletedTimestamps.add(timestamp);
+  // 즉시 화면에서 제거
+  const list = document.getElementById('order-list');
+  list?.querySelectorAll('.order-item').forEach(el => {
+    if(el.innerHTML.includes('deleteHistoryItem('+timestamp+')')) el.remove();
+  });
   try {
-    // 1. history 컬렉션에서 삭제
+    // history 컬렉션에서 삭제
     const snap = await getDocs(historyCol);
     for(const d of snap.docs) {
       if(d.data().timestamp===timestamp){await deleteDoc(doc(db,'history',d.id));break;}
     }
-    // 2. allOrders(orders 컬렉션)에 있는 항목이면 거기서도 삭제
+    // orders 컬렉션에 있는 항목이면 거기서도 삭제
     const inOrders = allOrders.find(o=>o.timestamp===timestamp);
     if(inOrders && inOrders.firestoreId){
       await deleteDoc(doc(db,'orders',inOrders.firestoreId));
     }
     showToast('🗑 주문 내역이 삭제됐어요.');
+  } catch(e) {
+    deletedTimestamps.delete(timestamp);
     loadAndRenderHistory();
-  } catch(e) { alert('삭제 실패:'+e.message); }
+    alert('삭제 실패:'+e.message);
+  }
 };
 
 async function loadAndRenderHistory() {
   const user = localStorage.getItem('bitcafe_username')||'';
-  if(!user){renderHistoryWithData(allOrders);return;}
+  if(!user){renderHistoryWithData(allOrders.filter(o=>!deletedTimestamps.has(o.timestamp)));return;}
   try {
     const snap = await getDocs(historyCol);
     const histDocs = snap.docs.map(d=>({...d.data(),_histId:d.id,fromHistory:true})).filter(o=>o.name===user);
     const activeTs = new Set(allOrders.map(o=>o.timestamp));
     const newItems = histDocs.filter(o=>!activeTs.has(o.timestamp));
-    const merged = [...allOrders,...newItems].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const merged = [...allOrders,...newItems]
+      .filter(o=>!deletedTimestamps.has(o.timestamp))
+      .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     renderHistoryWithData(merged);
-  } catch(e) { renderHistoryWithData(allOrders); }
+  } catch(e) { renderHistoryWithData(allOrders.filter(o=>!deletedTimestamps.has(o.timestamp))); }
 }
 
 function applyHistoryFilter(orders) {
