@@ -1252,7 +1252,7 @@ window.placeDelivery = async function() {
   const cup = getDOption('dcup');
   if (cup.includes('공용')) {
     const used = allOrders.filter(o=>(o.cup||'').includes('공용')).length;
-    const ret = parseInt(localStorage.getItem('bitcafe_returned')||'0');
+    let ret=0; try{const s=await getDoc(doc(db,'settings','cupReturned'));ret=parseInt(s.data()?.value||0);}catch(e){}
     const rem = Math.max(0, TOTAL_CUPS - Math.max(0, used-ret));
     if (rem<=0) { showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444'); return; }
   }
@@ -1420,7 +1420,7 @@ window.placeOrder=async function(){
   const cup=getOption('cup');
   if(cup.includes('공용')){
     const used=allOrders.filter(o=>(o.cup||'').includes('공용')).length;
-    const ret=parseInt(localStorage.getItem('bitcafe_returned')||'0');
+    let ret=0; try{const s=await getDoc(doc(db,'settings','cupReturned'));ret=parseInt(s.data()?.value||0);}catch(e){}
     const rem=Math.max(0,TOTAL_CUPS-Math.max(0,used-ret));
     if(rem<=0){showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444');return;}
   }
@@ -1538,6 +1538,20 @@ window.applyHistoryDateFilter = function() {
   document.querySelectorAll('[data-hfilter]').forEach(b=>b.classList.remove('active'));
   loadAndRenderHistory();
 };
+
+// ── 개인 주문내역 영구 보관 ──
+const historyCol = collection(db,'history');
+async function saveToHistory(o) {
+  try {
+    await addDoc(historyCol, {
+      name:o.name, menu:o.menu, emoji:o.emoji||'☕',
+      temp:o.temp||'', shot:o.shot||'', sweet:o.sweet||'', cup:o.cup||'',
+      delivery:o.delivery||false, location:o.location||'',
+      status:o.status, time:o.time||'', date:o.date||'',
+      timestamp:o.timestamp||Date.now()
+    });
+  } catch(e) {}
+}
 
 window.deleteHistoryItem = async function(timestamp) {
   if(!confirm('이 주문 내역을 삭제할까요?')) return;
@@ -1665,12 +1679,19 @@ window.setFilter=function(btn){
   currentFilter=btn.dataset.filter;renderAdmin();
 };
 window.changeStatus=async function(fid,status){try{await updateDoc(doc(db,'orders',fid),{status});}catch(e){alert('변경 실패:'+e.message);}};
+
 window.clearAllOrders=async function(){
-  if(!confirm('주문을 초기화할까요?\n(통계는 유지됩니다)'))return;
-  const ex=JSON.parse(localStorage.getItem('bitcafe_stats')||'[]');
-  localStorage.setItem('bitcafe_stats',JSON.stringify([...ex,...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||''}))]));
+  if(!confirm('주문을 초기화할까요?\n(개인 주문내역과 통계는 유지됩니다)'))return;
+  // 모든 주문 history에 백업
+  for(const o of allOrders){ await saveToHistory(o); }
+  // 완료 주문만 stats에 백업
+  const statsCol = collection(db,'stats');
+  for(const o of allOrders.filter(o=>o.status==='완료')){
+    try{await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||''});}catch(e){}
+  }
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
   try{await setDoc(doc(db,'settings','cupReturned'),{value:0});}catch(e){}
+  showToast('✅ 주문이 초기화됐어요.');
 };
 
 function renderAdmin(){
