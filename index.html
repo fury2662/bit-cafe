@@ -1083,13 +1083,7 @@ const sentTgIds = new Set();
 const tgBC = new BroadcastChannel('bitcafe_tg');
 tgBC.onmessage = (e) => { if(e.data?.type==='sent') sentTgIds.add(e.data.key); };
 
-function sendTelegram(msg, key=''){
-  // key가 있으면 다른 탭에 알림 (새 주문용)
-  if(key){
-    if(sentTgIds.has(key)) return;
-    sentTgIds.add(key);
-    tgBC.postMessage({type:'sent', key});
-  }
+function sendTelegram(msg){
   TG_CHATS.forEach(chatId => {
     fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
       method:'POST',
@@ -1097,6 +1091,13 @@ function sendTelegram(msg, key=''){
       body:JSON.stringify({chat_id:chatId, text:msg})
     }).catch(()=>{});
   });
+}
+
+function sendTelegramOnce(key, msg){
+  if(sentTgIds.has(key)) return;
+  sentTgIds.add(key);
+  tgBC.postMessage({type:'sent', key});
+  sendTelegram(msg);
 }
 
 // ── 브라우저 알림 권한 요청 ──
@@ -1476,27 +1477,22 @@ unsubscribe = onSnapshot(q,snapshot=>{
       // 텔레그램 알림 (항상 전송 - 로그인 무관)
       if(change.type==='added'){
         if(!isFirstLoad && !sentTgIds.has(o.firestoreId)){
-          sentTgIds.add(o.firestoreId);
-          tgBC.postMessage({type:'sent', key:o.firestoreId});
           const loc=o.delivery?`\n🚚 배달 · 📍 ${o.location}`:'';
-          sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}${loc}`);
+          sendTelegramOnce(o.firestoreId, `🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}${loc}`);
         }
       }
       if(change.type==='modified'){
         const mkKey = (status) => `${o.firestoreId}_${status}`;
         if(prev!=='제조중'&&o.status==='제조중'){
-          const k=mkKey('제조중');
-          if(!sentTgIds.has(k)){sentTgIds.add(k);tgBC.postMessage({type:'sent',key:k});sendTelegram(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);}
+          sendTelegramOnce(mkKey('제조중'), `☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);
         }
         if(prev!=='완료'&&o.status==='완료'){
           saveToHistory(o);
-          const k=mkKey('완료');
-          if(!sentTgIds.has(k)){sentTgIds.add(k);tgBC.postMessage({type:'sent',key:k});sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`);}
+          sendTelegramOnce(mkKey('완료'), `✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`);
         }
         if(prev!=='취소'&&o.status==='취소'){
           saveToHistory(o);
-          const k=mkKey('취소');
-          if(!sentTgIds.has(k)){sentTgIds.add(k);tgBC.postMessage({type:'sent',key:k});sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`);}
+          sendTelegramOnce(mkKey('취소'), `❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`);
         }
       }
 
@@ -1578,7 +1574,6 @@ async function saveToHistory(o) {
 
 window.deleteHistoryItem = async function(timestamp) {
   if(!confirm('이 주문 내역을 삭제할까요?')) return;
-  // 즉시 삭제 목록에 추가 (다시 살아나는 것 방지)
   deletedTimestamps.add(timestamp);
   // 즉시 화면에서 제거
   const list = document.getElementById('order-list');
@@ -1586,15 +1581,15 @@ window.deleteHistoryItem = async function(timestamp) {
     if(el.innerHTML.includes('deleteHistoryItem('+timestamp+')')) el.remove();
   });
   try {
-    // history 컬렉션에서 삭제
-    const snap = await getDocs(historyCol);
-    for(const d of snap.docs) {
-      if(d.data().timestamp===timestamp){await deleteDoc(doc(db,'history',d.id));break;}
-    }
-    // orders 컬렉션에 있는 항목이면 거기서도 삭제
+    // orders 컬렉션에 있으면 거기서 삭제 (새로고침 후에도 사라짐)
     const inOrders = allOrders.find(o=>o.timestamp===timestamp);
     if(inOrders && inOrders.firestoreId){
       await deleteDoc(doc(db,'orders',inOrders.firestoreId));
+    }
+    // history 컬렉션에도 있으면 삭제
+    const snap = await getDocs(historyCol);
+    for(const d of snap.docs) {
+      if(d.data().timestamp===timestamp){await deleteDoc(doc(db,'history',d.id));break;}
     }
     showToast('🗑 주문 내역이 삭제됐어요.');
   } catch(e) {
