@@ -328,8 +328,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div class="option-row">
             <div class="option-label">컵 선택</div>
             <div class="option-chips">
-              <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
-              <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
+              <div class="chip selected" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
+              <div class="chip" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
             </div>
             <div id="cup-warn" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
           </div>
@@ -342,7 +342,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div><div class="summary-name" id="sum-name"></div><div class="summary-detail" id="sum-detail"></div></div>
           </div>
         </div>
-        <button class="order-btn" id="order-btn" onclick="placeOrder()" disabled>메뉴를 선택해주세요</button>
+        <button class="order-btn" id="order-btn" onclick="placeOrder()" disabled style="margin-bottom:16px;">메뉴를 선택해주세요</button>
       </div>
     </div>
 
@@ -383,8 +383,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="option-row">
           <div class="option-label">컵 선택</div>
           <div class="option-chips">
-            <div class="chip selected" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-pc" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
-            <div class="chip" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
+            <div class="chip selected" data-group="cup" onclick="selectChip(this)">♻️ 개인컵</div>
+            <div class="chip" data-group="cup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-pc" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
           </div>
           <div id="cup-warn-pc" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
         </div>
@@ -693,8 +693,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div class="option-row">
             <div class="option-label">컵 선택</div>
             <div class="option-chips">
-              <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
-              <div class="chip" data-group="dcup" onclick="selectChip(this)">♻️ 개인컵</div>
+              <div class="chip selected" data-group="dcup" onclick="selectChip(this)">♻️ 개인컵</div>
+              <div class="chip" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
             </div>
             <div id="cup-warn-d" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
           </div>
@@ -707,7 +707,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div><div class="summary-name" id="delivery-sum-name"></div><div class="summary-detail" id="delivery-sum-detail"></div></div>
           </div>
         </div>
-        <button class="order-btn" id="delivery-btn" onclick="placeDelivery()" disabled>메뉴를 선택해주세요</button>
+        <button class="order-btn" id="delivery-btn" onclick="placeDelivery()" disabled style="margin-bottom:16px;">메뉴를 선택해주세요</button>
       </div>
     </div>
 
@@ -762,8 +762,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="option-row">
           <div class="option-label">컵 선택</div>
           <div class="option-chips">
-            <div class="chip selected" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d-pc" style="font-size:10px;background:rgba(37,99,235,.12);color:#2563eb;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
-            <div class="chip" data-group="dcup" onclick="selectChip(this)">♻️ 개인컵</div>
+            <div class="chip selected" data-group="dcup" onclick="selectChip(this)">♻️ 개인컵</div>
+            <div class="chip" data-group="dcup" onclick="selectChip(this)">🥤 공용컵 <span id="cup-badge-d-pc" style="font-size:10px;background:rgba(255,255,255,.3);color:#fff;padding:1px 5px;border-radius:8px;margin-left:2px;">10개</span></div>
           </div>
           <div id="cup-warn-d-pc" style="display:none;font-size:11px;color:#ef4444;margin-top:6px;">⚠️ 공용컵 재고가 부족해요!</div>
         </div>
@@ -1719,7 +1719,11 @@ window.changeStatus=async function(fid,status){try{await updateDoc(doc(db,'order
 window.clearAllOrders=async function(){
   if(!confirm('주문을 초기화할까요?\n(개인 주문내역과 통계는 유지됩니다)'))return;
   // 모든 주문 history에 백업
-  for(const o of allOrders){ await saveToHistory(o); }
+  // 이미 history에 있는 timestamp 목록
+  const existSnap = await getDocs(historyCol);
+  const existTs = new Set(existSnap.docs.map(d=>d.data().timestamp));
+  // history에 없는 항목만 저장 (중복 방지)
+  for(const o of allOrders){ if(!existTs.has(o.timestamp)) await saveToHistory(o); }
   // 완료 주문만 stats에 백업
   const statsCol = collection(db,'stats');
   for(const o of allOrders.filter(o=>o.status==='완료')){
