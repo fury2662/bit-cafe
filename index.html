@@ -1078,7 +1078,18 @@ window.returnCup=async function(){
 const TG_TOKEN = '8052031047:AAH-Sg-61w-oTiu407wk62VBTB29dzMEjLQ';
 const TG_CHATS = ['8541660301', '8653000541']; // 관리자, 바리스타(서진)
 const sentTgIds = new Set();
-function sendTelegram(msg){
+
+// 탭 간 중복 방지 - BroadcastChannel
+const tgBC = new BroadcastChannel('bitcafe_tg');
+tgBC.onmessage = (e) => { if(e.data?.type==='sent') sentTgIds.add(e.data.key); };
+
+function sendTelegram(msg, key=''){
+  // key가 있으면 다른 탭에 알림 (새 주문용)
+  if(key){
+    if(sentTgIds.has(key)) return;
+    sentTgIds.add(key);
+    tgBC.postMessage({type:'sent', key});
+  }
   TG_CHATS.forEach(chatId => {
     fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
       method:'POST',
@@ -1466,16 +1477,27 @@ unsubscribe = onSnapshot(q,snapshot=>{
       if(change.type==='added'){
         if(!isFirstLoad && !sentTgIds.has(o.firestoreId)){
           sentTgIds.add(o.firestoreId);
+          tgBC.postMessage({type:'sent', key:o.firestoreId});
           const loc=o.delivery?`\n🚚 배달 · 📍 ${o.location}`:'';
           sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}${loc}`);
         }
-        const loc = o.delivery ? `\n🚚 배달 · 📍 ${o.location}` : '';
-        sendTelegram(`🔔 새 주문!\n👤 ${o.name}님\n${o.emoji} ${o.menu}\n🌡 ${o.temp||''} · ${o.shot} · 당도:${o.sweet} · ${o.cup||''}${loc}`);
       }
       if(change.type==='modified'){
-        if(prev!=='제조중'&&o.status==='제조중') sendTelegram(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);
-        if(prev!=='완료'&&o.status==='완료') { saveToHistory(o); sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`); }
-        if(prev!=='취소'&&o.status==='취소') { saveToHistory(o); sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`); }
+        const mkKey = (status) => `${o.firestoreId}_${status}`;
+        if(prev!=='제조중'&&o.status==='제조중'){
+          const k=mkKey('제조중');
+          if(!sentTgIds.has(k)){sentTgIds.add(k);tgBC.postMessage({type:'sent',key:k});sendTelegram(`☕ 제조 시작!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 제조중이에요!`);}
+        }
+        if(prev!=='완료'&&o.status==='완료'){
+          saveToHistory(o);
+          const k=mkKey('완료');
+          if(!sentTgIds.has(k)){sentTgIds.add(k);tgBC.postMessage({type:'sent',key:k});sendTelegram(`✅ 주문 완료!\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 준비됐어요!`);}
+        }
+        if(prev!=='취소'&&o.status==='취소'){
+          saveToHistory(o);
+          const k=mkKey('취소');
+          if(!sentTgIds.has(k)){sentTgIds.add(k);tgBC.postMessage({type:'sent',key:k});sendTelegram(`❌ 주문 취소\n👤 ${o.name}님의 ${o.emoji} ${o.menu} 취소됐어요.`);}
+        }
       }
 
       // 앱 내 알림 (로그인 상태에 따라)
