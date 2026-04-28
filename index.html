@@ -955,7 +955,7 @@ function syncName(val) {
 }
 ['username','username-pc'].forEach(id=>{
   const el=document.getElementById(id);
-  if(el) el.addEventListener('input',()=>{syncName(el.value.trim());updateSummary();});
+  if(el) el.addEventListener('input',()=>{syncName(el.value);updateSummary();});
 });
 if(currentUser) ['username','username-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=currentUser;});
 
