@@ -1052,6 +1052,7 @@ window.selectChip = function(chip) {
   document.querySelectorAll(`.chip[data-group="${group}"]`).forEach(c=>c.classList.remove('selected'));
   chip.classList.add('selected');
   updateSummary();
+  updateDeliverySummary();
 };
 function getOption(group){
   const s=document.querySelector(`.chip.selected[data-group="${group}"]`);
@@ -1092,6 +1093,7 @@ function updateSummary(){
     else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}
   });
 }
+window.updateSummary = updateSummary;
 
 // ── 공용컵 ──
 async function updateCupStock(orders){
@@ -1287,6 +1289,7 @@ function updateDeliverySummary() {
     else{b.disabled=true;b.textContent='이름을 먼저 입력해주세요';}
   });
 }
+window.updateDeliverySummary = updateDeliverySummary;
 
 ['delivery-name','delivery-name-mob'].forEach(id=>{
   const el=document.getElementById(id);
@@ -2226,6 +2229,23 @@ window.renderStats = async function(){
   const per=data.filter(o=>(o.cup||'').includes('개인')).length,sh=data.filter(o=>(o.cup||'').includes('공용')).length,tot=per+sh||1;
   const pp=Math.round(per/tot*100),sp=100-pp,r=40,ci=Math.round(2*Math.PI*r),pd=Math.round(pp/100*ci);
   document.getElementById('chart-cup').innerHTML=`<div class="cup-chart"><svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" fill="none" stroke="#ddeaff" stroke-width="16"/><circle cx="50" cy="50" r="${r}" fill="none" stroke="#2563eb" stroke-width="16" stroke-dasharray="${pd} ${ci-pd}" transform="rotate(-90 50 50)"/><text x="50" y="46" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">${pp}%</text><text x="50" y="60" text-anchor="middle" font-size="9" fill="var(--text-muted)">개인컵</text></svg><div class="cup-legend"><div class="cup-legend-item"><div class="cup-dot" style="background:#2563eb"></div><div>♻️ 개인컵 <strong>${per}건</strong>(${pp}%)</div></div><div class="cup-legend-item"><div class="cup-dot" style="background:#ddeaff;border:1px solid #bdd4f4"></div><div>🥤 공용컵 <strong>${sh}건</strong>(${sp}%)</div></div></div></div>`;
+  // 1. 페이지 로드가 완료된 후 실행되도록 설정
+document.addEventListener('DOMContentLoaded', function() {
+    // 2. PC용 샷 선택 셀렉트 박스 요소를 찾음
+    const shotSelectPC = document.getElementById('shot-select-pc');
+    
+    if (shotSelectPC) {
+        // 3. 사용자가 값을 변경할 때마다 updateSummary 함수를 실행함
+        shotSelectPC.addEventListener('change', function() {
+            // 함수가 정의되어 있는지 확인 후 실행
+            if (typeof updateSummary === 'function') {
+                updateSummary();
+            } else {
+                console.error('updateSummary 함수가 아직 로드되지 않았습니다.');
+            }
+        });
+    }
+});
 }
 </script>
 </body>
