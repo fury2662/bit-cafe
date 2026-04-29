@@ -1599,6 +1599,9 @@ const historyCol = collection(db,'history');
 const deletedTimestamps = new Set();
 async function saveToHistory(o) {
   try {
+    // 같은 timestamp가 이미 있으면 저장 안 함
+    const existing = await getDocs(query(historyCol, orderBy('timestamp','desc')));
+    if (existing.docs.some(d => d.data().timestamp === o.timestamp)) return;
     await addDoc(historyCol, {
       name:o.name, menu:o.menu, emoji:o.emoji||'☕',
       temp:o.temp||'', shot:o.shot||'', sweet:o.sweet||'', cup:o.cup||'',
@@ -1641,7 +1644,20 @@ async function loadAndRenderHistory() {
   if(!user){renderHistoryWithData(allOrders.filter(o=>!deletedTimestamps.has(o.timestamp)));return;}
   try {
     const snap = await getDocs(historyCol);
-    const histDocs = snap.docs.map(d=>({...d.data(),_histId:d.id,fromHistory:true})).filter(o=>o.name===user);
+    // 중복 timestamp 자동 정리
+    const seen = new Map();
+    for (const d of snap.docs) {
+      const ts = d.data().timestamp;
+      if (seen.has(ts)) {
+        await deleteDoc(doc(db,'history',d.id)); // 중복 삭제
+      } else {
+        seen.set(ts, d.id);
+      }
+    }
+    const histDocs = snap.docs
+      .filter(d => seen.get(d.data().timestamp) === d.id) // 살아남은 것만
+      .map(d=>({...d.data(),_histId:d.id,fromHistory:true}))
+      .filter(o=>o.name===user);
     const activeTs = new Set(allOrders.map(o=>o.timestamp));
     const newItems = histDocs.filter(o=>!activeTs.has(o.timestamp));
     const merged = [...allOrders,...newItems]
