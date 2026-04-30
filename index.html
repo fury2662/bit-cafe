@@ -836,6 +836,7 @@ const stockCol  = collection(db,'stock'); // 메뉴별 재고
 const ADMIN_PW       = '1234';
 const ADMIN_PW_SUPER = '9876';
 let isSuper = false;
+let isAdminLoggedIn = false;
 let TOTAL_CUPS = 10;
 let selectedMenu = null;
 let allOrders    = [];
@@ -1515,7 +1516,7 @@ unsubscribe = onSnapshot(q,snapshot=>{
   const newOrders=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
   if(isFirstLoad){newOrders.forEach(o=>{prevStatuses[o.firestoreId]=o.status;});isFirstLoad=false;}
   else{
-    const isAdmin=document.getElementById('admin-dashboard').style.display==='block';
+    const isAdmin=isAdminLoggedIn;
     const user=localStorage.getItem('bitcafe_username')||'';
     snapshot.docChanges().forEach(change=>{
       const o={firestoreId:change.doc.id,...change.doc.data()};
@@ -1732,6 +1733,7 @@ window.cancelOrder=async function(fid){
 window.adminLogin=function(){
   const pw=document.getElementById('admin-pw').value;
   if(pw===ADMIN_PW || pw===ADMIN_PW_SUPER){
+    isAdminLoggedIn = true;
     isSuper = pw===ADMIN_PW_SUPER;
     document.getElementById('admin-login').style.display='none';
     document.getElementById('admin-dashboard').style.display='block';
