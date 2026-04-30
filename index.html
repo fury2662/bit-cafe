@@ -1516,7 +1516,7 @@ unsubscribe = onSnapshot(q,snapshot=>{
   const newOrders=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
   if(isFirstLoad){newOrders.forEach(o=>{prevStatuses[o.firestoreId]=o.status;});isFirstLoad=false;}
   else{
-    const isAdmin=isAdminLoggedIn;
+    const isAdmin=isSuper;
     const user=localStorage.getItem('bitcafe_username')||'';
     snapshot.docChanges().forEach(change=>{
       const o={firestoreId:change.doc.id,...change.doc.data()};
