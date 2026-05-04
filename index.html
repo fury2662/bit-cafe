@@ -307,6 +307,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div class="option-chips">
               <div class="chip selected" data-group="temp" onclick="selectChip(this)">🔥 HOT</div>
               <div class="chip" data-group="temp" onclick="selectChip(this)">🧊 ICE</div>
+              <div class="chip" data-group="temp" onclick="selectChip(this)">🧊🧊 얼음많이</div>
             </div>
           </div>
           <div class="option-row">
@@ -366,6 +367,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div class="option-chips">
             <div class="chip selected" data-group="temp" onclick="selectChip(this)">🔥 HOT</div>
             <div class="chip" data-group="temp" onclick="selectChip(this)">🧊 ICE</div>
+            <div class="chip" data-group="temp" onclick="selectChip(this)">🧊🧊 얼음많이</div>
           </div>
         </div>
         <div class="option-row">
@@ -684,6 +686,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div class="option-chips">
               <div class="chip selected" data-group="dtemp" onclick="selectChip(this)">🔥 HOT</div>
               <div class="chip" data-group="dtemp" onclick="selectChip(this)">🧊 ICE</div>
+              <div class="chip" data-group="dtemp" onclick="selectChip(this)">🧊🧊 얼음많이</div>
             </div>
           </div>
           <div class="option-row">
@@ -757,6 +760,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div class="option-chips">
             <div class="chip selected" data-group="dtemp" onclick="selectChip(this)">🔥 HOT</div>
             <div class="chip" data-group="dtemp" onclick="selectChip(this)">🧊 ICE</div>
+            <div class="chip" data-group="dtemp" onclick="selectChip(this)">🧊🧊 얼음많이</div>
           </div>
         </div>
         <div class="option-row">
@@ -1029,11 +1033,26 @@ window.selectMenu = function(card) {
   updateShotDisabled(card.dataset.menu, false);
 
   // 온도 행
-  ['row-temp','row-temp-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=type==='both'?'':'none';});
+  ['row-temp','row-temp-pc'].forEach(id=>{
+    const e=document.getElementById(id);if(!e)return;
+    e.style.display=type==='hot'?'none':'';
+  });
   if(type!=='both'){
-    document.querySelectorAll('.chip[data-group="temp"]').forEach(c=>c.classList.remove('selected'));
-    const fix=type==='ice'?'🧊 ICE':'🔥 HOT';
-    document.querySelectorAll('.chip[data-group="temp"]').forEach(c=>{if(c.textContent.trim()===fix)c.classList.add('selected');});
+    document.querySelectorAll('.chip[data-group="temp"]').forEach(c=>{
+      c.classList.remove('selected');
+      if(type==='ice'){
+        // ICE 전용: HOT 숨기고 ICE/얼음많이만 표시
+        c.style.display=c.textContent.includes('HOT')?'none':'';
+        if(c.textContent.trim()==='🧊 ICE') c.classList.add('selected');
+      } else {
+        // HOT 전용: 행 자체가 숨겨짐
+        c.style.display='';
+        if(c.textContent.trim()==='🔥 HOT') c.classList.add('selected');
+      }
+    });
+  } else {
+    // both: 모든 칩 표시
+    document.querySelectorAll('.chip[data-group="temp"]').forEach(c=>c.style.display='');
   }
 
   // 모바일 옵션패널
@@ -1069,7 +1088,7 @@ function getOption(group){
 // ── 요약 업데이트 ──
 function updateSummary(){
   if(!selectedMenu) return;
-  const temp=selectedMenu.type==='ice'?'🧊 ICE':selectedMenu.type==='hot'?'🔥 HOT':(getOption('temp')||'🔥 HOT');
+  const temp=selectedMenu.type==='hot'?'🔥 HOT':(getOption('temp')||'🧊 ICE');
   const detail=`${temp} · ${(isPC()?document.getElementById('shot-select-pc'):document.getElementById('shot-select'))?.value||'1샷'} · 당도:${getOption('sweet')} · ${getOption('cup')}`;
   const name=getName();
   // 모바일
@@ -1240,11 +1259,23 @@ window.selectDeliveryMenu = function(card) {
   updateShotDisabled(card.dataset.menu, true);
 
   // 온도 행
-  ['delivery-row-temp','delivery-row-temp-mob'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=type==='both'?'':'none';});
+  ['delivery-row-temp','delivery-row-temp-mob'].forEach(id=>{
+    const e=document.getElementById(id);if(!e)return;
+    e.style.display=type==='hot'?'none':'';
+  });
   if (type !== 'both') {
-    document.querySelectorAll('.chip[data-group="dtemp"]').forEach(c => c.classList.remove('selected'));
-    const fix = type==='ice' ? '🧊 ICE' : '🔥 HOT';
-    document.querySelectorAll('.chip[data-group="dtemp"]').forEach(c => { if(c.textContent.trim()===fix) c.classList.add('selected'); });
+    document.querySelectorAll('.chip[data-group="dtemp"]').forEach(c => {
+      c.classList.remove('selected');
+      if(type==='ice'){
+        c.style.display=c.textContent.includes('HOT')?'none':'';
+        if(c.textContent.trim()==='🧊 ICE') c.classList.add('selected');
+      } else {
+        c.style.display='';
+        if(c.textContent.trim()==='🔥 HOT') c.classList.add('selected');
+      }
+    });
+  } else {
+    document.querySelectorAll('.chip[data-group="dtemp"]').forEach(c => c.style.display='');
   }
   // 모바일 옵션패널
   const opm = document.getElementById('delivery-option-panel-mob');
@@ -1265,7 +1296,7 @@ function getDOption(group) {
 
 function updateDeliverySummary() {
   if (!selectedDeliveryMenu) return;
-  const temp = selectedDeliveryMenu.type==='ice'?'🧊 ICE':selectedDeliveryMenu.type==='hot'?'🔥 HOT':(getDOption('dtemp')||'🔥 HOT');
+  const temp = selectedDeliveryMenu.type==='hot'?'🔥 HOT':(getDOption('dtemp')||'🧊 ICE');
   const detail = `${temp} · ${(isPC()?document.getElementById('dshot-select-pc'):document.getElementById('dshot-select'))?.value||'1샷'} · 당도:${getDOption('dsweet')} · ${getDOption('dcup')}`;
   const name = getDeliveryName();
 
