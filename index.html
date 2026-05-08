@@ -561,12 +561,37 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         </div>
         <!-- 운영 시간 설정 -->
         <div class="cup-mgmt-card" style="margin-bottom:14px;">
-          <div class="cup-mgmt-title" style="margin-bottom:10px;">🕐 주문 가능 시간 설정</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-            <div><label style="font-size:11px;color:var(--text-muted);font-weight:500;">시작 시간</label>
-            <input type="time" id="order-time-start" value="07:30" style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;"></div>
-            <div><label style="font-size:11px;color:var(--text-muted);font-weight:500;">종료 시간</label>
-            <input type="time" id="order-time-end" value="16:30" style="width:100%;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;"></div>
+          <div class="cup-mgmt-title" style="margin-bottom:12px;">🕐 요일별 주문 가능 시간 설정</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">※ 토·일·공휴일은 설정과 무관하게 주문이 차단됩니다.</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+            <div style="display:grid;grid-template-columns:36px 1fr 1fr;gap:6px;align-items:center;">
+              <span style="font-size:12px;font-weight:700;color:var(--accent);">월</span>
+              <input type="time" id="ot-1-s" value="07:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+              <input type="time" id="ot-1-e" value="16:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="display:grid;grid-template-columns:36px 1fr 1fr;gap:6px;align-items:center;">
+              <span style="font-size:12px;font-weight:700;color:var(--accent);">화</span>
+              <input type="time" id="ot-2-s" value="07:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+              <input type="time" id="ot-2-e" value="16:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="display:grid;grid-template-columns:36px 1fr 1fr;gap:6px;align-items:center;">
+              <span style="font-size:12px;font-weight:700;color:var(--accent);">수</span>
+              <input type="time" id="ot-3-s" value="07:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+              <input type="time" id="ot-3-e" value="16:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="display:grid;grid-template-columns:36px 1fr 1fr;gap:6px;align-items:center;">
+              <span style="font-size:12px;font-weight:700;color:var(--accent);">목</span>
+              <input type="time" id="ot-4-s" value="07:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+              <input type="time" id="ot-4-e" value="16:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="display:grid;grid-template-columns:36px 1fr 1fr;gap:6px;align-items:center;">
+              <span style="font-size:12px;font-weight:700;color:#7c3aed;">금</span>
+              <input type="time" id="ot-5-s" value="07:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+              <input type="time" id="ot-5-e" value="16:30" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;color:var(--cream);font-family:'Noto Sans KR',sans-serif;outline:none;box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button onclick="applyAllDays()" style="flex:1;padding:8px;background:rgba(37,99,235,.08);border:1px solid var(--accent);border-radius:10px;color:var(--accent);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">월 시간 전체 적용</button>
           </div>
           <button onclick="saveOrderTime()" class="order-btn" style="padding:10px;font-size:13px;">⏰ 운영 시간 저장</button>
         </div>
@@ -883,27 +908,74 @@ function getLocalDate() {
 // ── 주말/공휴일/운영시간 ──
 const HOLIDAYS = ['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25'];
 const LUNAR_2026 = ['01-28','01-29','01-30','05-25','09-24','09-25','09-26'];
-let orderTimeStart = '07:30';
-let orderTimeEnd   = '16:30';
+const DAY_NAMES = ['','월','화','수','목','금'];
+
+// 요일별(1=월~5=금) 운영시간 기본값
+let dayTimes = {
+  1:{s:'07:30',e:'16:30'},
+  2:{s:'07:30',e:'16:30'},
+  3:{s:'07:30',e:'16:30'},
+  4:{s:'07:30',e:'16:30'},
+  5:{s:'07:30',e:'16:30'},
+};
 
 async function loadOrderTime() {
   try {
     const snap = await getDoc(doc(db,'settings','orderTime'));
-    if (snap.exists()) { orderTimeStart = snap.data().start||'07:30'; orderTimeEnd = snap.data().end||'16:30'; }
+    if (snap.exists()) {
+      const d = snap.data();
+      // 요일별 구조로 저장된 경우
+      if (d.days) {
+        dayTimes = d.days;
+      } else if (d.start && d.end) {
+        // 구버전 일괄 설정 → 전 요일에 동일 적용
+        for(let i=1;i<=5;i++) dayTimes[i]={s:d.start,e:d.end};
+      }
+    }
   } catch(e) {}
-  const si = document.getElementById('order-time-start');
-  const ei = document.getElementById('order-time-end');
-  if(si) si.value = orderTimeStart;
-  if(ei) ei.value = orderTimeEnd;
+  // UI 반영
+  for(let i=1;i<=5;i++){
+    const si=document.getElementById(`ot-${i}-s`);
+    const ei=document.getElementById(`ot-${i}-e`);
+    if(si) si.value=dayTimes[i]?.s||'07:30';
+    if(ei) ei.value=dayTimes[i]?.e||'16:30';
+  }
   updateOrderTimeBanner();
 }
 
-window.saveOrderTime = async function() {
-  const s = document.getElementById('order-time-start')?.value;
-  const e = document.getElementById('order-time-end')?.value;
-  if (!s||!e) return;
-  try { await setDoc(doc(db,'settings','orderTime'),{start:s,end:e}); orderTimeStart=s; orderTimeEnd=e; updateOrderTimeBanner(); showToast('✅ 운영 시간이 저장됐어요!'); } catch(err) { alert('저장 실패:'+err.message); }
+// 월요일 시간을 화~금에 일괄 적용
+window.applyAllDays = function() {
+  const s=document.getElementById('ot-1-s')?.value||'07:30';
+  const e=document.getElementById('ot-1-e')?.value||'16:30';
+  for(let i=2;i<=5;i++){
+    const si=document.getElementById(`ot-${i}-s`);
+    const ei=document.getElementById(`ot-${i}-e`);
+    if(si) si.value=s;
+    if(ei) ei.value=e;
+  }
+  showToast('✅ 월요일 시간이 전체 적용됐어요!');
 };
+
+window.saveOrderTime = async function() {
+  const days={};
+  for(let i=1;i<=5;i++){
+    const s=document.getElementById(`ot-${i}-s`)?.value;
+    const e=document.getElementById(`ot-${i}-e`)?.value;
+    if(!s||!e) return;
+    days[i]={s,e};
+  }
+  try {
+    await setDoc(doc(db,'settings','orderTime'),{days});
+    dayTimes=days;
+    updateOrderTimeBanner();
+    showToast('✅ 운영 시간이 저장됐어요!');
+  } catch(err) { alert('저장 실패:'+err.message); }
+};
+
+function getTodayTime() {
+  const day = new Date().getDay(); // 0=일,1=월...6=토
+  return dayTimes[day] || null;
+}
 
 function isHoliday() {
   const d = new Date(); const day = d.getDay();
@@ -913,23 +985,29 @@ function isHoliday() {
 }
 function isOrderTimeAvailable() {
   if (isHoliday()) return false;
+  const t = getTodayTime();
+  if (!t) return false;
   const d = new Date();
   const hhmm = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
-  return hhmm >= orderTimeStart && hhmm <= orderTimeEnd;
+  return hhmm >= t.s && hhmm <= t.e;
 }
 function getUnavailableReason() {
   const d = new Date(); const day = d.getDay();
   if (day===0||day===6) return '🚫 주말에는 주문할 수 없어요';
   const mmdd = `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   if (HOLIDAYS.includes(mmdd)||LUNAR_2026.includes(mmdd)) return '🚫 공휴일에는 주문할 수 없어요';
-  const fmt = t => { const [h,m]=t.split(':'); const hh=parseInt(h); return `${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`; };
-  return `🚫 주문 시간 아님  ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)}`;
+  const t = getTodayTime();
+  const fmt = t2 => { const [h,m]=t2.split(':'); const hh=parseInt(h); return `${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}:${m}`; };
+  return `🚫 주문 시간 아님  ${fmt(t.s)} ~ ${fmt(t.e)}`;
 }
 function updateOrderTimeBanner() {
   const available = isOrderTimeAvailable();
-  const fmt = t => { const [h,m]=t.split(':'); const hh=parseInt(h); return `${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}시 ${m}분`; };
+  const t = getTodayTime();
+  const fmt = t2 => { const [h,m]=t2.split(':'); const hh=parseInt(h); return `${hh<12?'오전':'오후'} ${hh<=12?hh:hh-12}시 ${m}분`; };
+  const day = new Date().getDay();
+  const dayLabel = DAY_NAMES[day] ? `(${DAY_NAMES[day]}) ` : '';
   const msg = available
-    ? `✅ 주문 가능  ${fmt(orderTimeStart)} ~ ${fmt(orderTimeEnd)}`
+    ? `✅ 주문 가능 ${dayLabel} ${t?fmt(t.s):''}  ~ ${t?fmt(t.e):''}`
     : getUnavailableReason();
   const color = available ? 'rgba(5,150,105,.08)' : 'rgba(239,68,68,.07)';
   const border = available ? '#6ee7b7' : '#fca5a5';
