@@ -2215,7 +2215,7 @@ window.setDateRange=function(type){
 window.renderStats = async function(){
   let saved=[];
   try{const snap=await getDocs(collection(db,'stats'));saved=snap.docs.map(d=>d.data());}catch(e){}
-  let data=[...saved,...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||''}))];
+  let data=[...saved,...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||'',status:o.status||''}))].filter(o=>o.status!=='취소');
   const sv=document.getElementById('stat-date-start')?.value,ev=document.getElementById('stat-date-end')?.value;
   if(sv||ev) data=data.filter(o=>(!sv||o.date>=sv)&&(!ev||o.date<=ev));
   if(data.length===0){['chart-menu','chart-time','chart-cup'].forEach(id=>{document.getElementById(id).innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터가 없어요</div>`;});return;}
