@@ -1909,7 +1909,7 @@ window.clearAllOrders=async function(){
   // 완료 주문만 stats에 백업
   const statsCol = collection(db,'stats');
   for(const o of allOrders.filter(o=>o.status==='완료')){
-    try{await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||''});}catch(e){}
+    try{await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',status:'완료',timestamp:o.timestamp||''});}catch(e){}
   }
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
   try{await setDoc(doc(db,'settings','cupReturned'),{value:0});}catch(e){}
@@ -2293,7 +2293,11 @@ window.setDateRange=function(type){
 window.renderStats = async function(){
   let saved=[];
   try{const snap=await getDocs(collection(db,'stats'));saved=snap.docs.map(d=>d.data());}catch(e){}
-  let data=[...saved,...allOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||'',status:o.status||''}))].filter(o=>o.status!=='취소');
+  // stats에 저장된 timestamp 목록
+  const savedTs=new Set(saved.map(o=>o.timestamp).filter(Boolean));
+  // allOrders 중 stats에 없는 것만 합산 (중복 방지)
+  const liveOrders=allOrders.filter(o=>!savedTs.has(o.timestamp));
+  let data=[...saved,...liveOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||'',status:o.status||'',timestamp:o.timestamp||''}))].filter(o=>o.status!=='취소');
   const sv=document.getElementById('stat-date-start')?.value,ev=document.getElementById('stat-date-end')?.value;
   if(sv||ev) data=data.filter(o=>(!sv||o.date>=sv)&&(!ev||o.date<=ev));
   if(data.length===0){['chart-menu','chart-time','chart-cup'].forEach(id=>{document.getElementById(id).innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">데이터가 없어요</div>`;});return;}
