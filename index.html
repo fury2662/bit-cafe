@@ -1906,9 +1906,13 @@ window.clearAllOrders=async function(){
   const existTs = new Set(existSnap.docs.map(d=>d.data().timestamp));
   // history에 없는 항목만 저장 (중복 방지)
   for(const o of allOrders){ if(!existTs.has(o.timestamp)) await saveToHistory(o); }
-  // 완료 주문만 stats에 백업
+  // 완료 주문만 stats에 백업 (중복 방지)
   const statsCol = collection(db,'stats');
+  const statsSnap = await getDocs(statsCol);
+  const statsKeys = new Set(statsSnap.docs.map(d=>{const s=d.data();return `${s.date||''}|${s.time||''}|${s.menu||''}`;}));
   for(const o of allOrders.filter(o=>o.status==='완료')){
+    const key=`${o.date||''}|${o.time||''}|${o.menu||''}`;
+    if(statsKeys.has(key)) continue;
     try{await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',status:'완료',timestamp:o.timestamp||''});}catch(e){}
   }
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
@@ -2293,10 +2297,11 @@ window.setDateRange=function(type){
 window.renderStats = async function(){
   let saved=[];
   try{const snap=await getDocs(collection(db,'stats'));saved=snap.docs.map(d=>d.data());}catch(e){}
-  // stats에 저장된 timestamp 목록
-  const savedTs=new Set(saved.map(o=>o.timestamp).filter(Boolean));
+  // date+time+menu 조합으로 중복 키 생성
+  const makeKey = o => `${o.date||''}|${o.time||''}|${o.menu||''}`;
+  const savedKeys = new Set(saved.map(makeKey));
   // allOrders 중 stats에 없는 것만 합산 (중복 방지)
-  const liveOrders=allOrders.filter(o=>!savedTs.has(o.timestamp));
+  const liveOrders = allOrders.filter(o => !savedKeys.has(makeKey(o)));
   let data=[...saved,...liveOrders.map(o=>({menu:o.menu,cup:o.cup,time:o.time,temp:o.temp,date:o.date||'',status:o.status||'',timestamp:o.timestamp||''}))].filter(o=>o.status!=='취소');
   const sv=document.getElementById('stat-date-start')?.value,ev=document.getElementById('stat-date-end')?.value;
   if(sv||ev) data=data.filter(o=>(!sv||o.date>=sv)&&(!ev||o.date<=ev));
@@ -2320,7 +2325,7 @@ window.renderStats = async function(){
     menus.forEach(m => {
       if(type==='both'){
         const hotCnt = data.filter(o=>o.menu===m.name&&(o.temp||'').includes('HOT')).length;
-        const iceCnt = data.filter(o=>o.menu===m.name&&(o.temp||'').includes('ICE')).length;
+        const iceCnt = data.filter(o=>o.menu===m.name&&!(o.temp||'').includes('HOT')&&(o.temp||'')!=='').length;
         const total  = hotCnt + iceCnt;
         if(!total) return;
         const maxVal = Math.max(...data.map((_,__)=>1), total);
