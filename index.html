@@ -44,7 +44,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   #page-order .page-header h1{font-size:19px;}
   #page-order .page-header p{margin:0 0 0 6px;font-size:12px;}
   .pc-left{overflow-y:auto;padding:12px 14px 20px 24px;border-right:1px solid var(--border);}
-  .pc-right{display:flex!important;flex-direction:column;gap:8px;padding:20px 18px;overflow-y:auto;}
+  .pc-right{display:flex!important;flex-direction:column;gap:8px;padding:20px 18px;overflow-y:auto;min-height:0;}
   .pc-right .order-btn-pc{margin-top:auto;}
   /* 메뉴 카드 PC */
   .pc-left .menu-grid{grid-template-columns:1fr 1fr 1fr!important;gap:5px;margin-bottom:6px;}
@@ -59,7 +59,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   #page-history.active,#page-admin.active,#page-message.active{display:block!important;flex:1;overflow-y:auto;padding:24px 32px 20px;}
   /* 배달 페이지도 주문처럼 2단 */
   #page-delivery{display:none!important;}
-  #page-delivery.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto minmax(0,auto) 1fr;flex:1;overflow:hidden;}
+  #page-delivery.active{display:grid!important;grid-template-columns:1fr 340px;grid-template-rows:auto auto minmax(0,1fr);flex:1;overflow:hidden;}
   #page-delivery .page-header{grid-column:1/-1;padding:14px 28px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);text-align:left;}
   #page-delivery .page-header .logo-icon{font-size:24px;display:inline;margin:0;animation:none;}
   #page-delivery .page-header h1{font-size:19px;}
@@ -69,10 +69,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   #page-history .page-header h1,#page-admin .page-header h1{font-size:20px;}
   #page-history .page-header p,#page-admin .page-header p{margin:0 0 0 6px;font-size:12px;}
   #page-order{display:none!important;}
-  #order-time-banner{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-  #delivery-status-banner{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-  #order-time-banner-d{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
-  #delivery-status-banner-d{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  #banner-wrap,#banner-wrap-d{grid-column:1/-1;}
+  #order-time-banner{margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:7px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  #delivery-status-banner,#delivery-status-banner-d{margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:7px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  #order-time-banner-d{margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:7px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 }
 
 /* ── 헤더 ── */
@@ -254,6 +254,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 }
 @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
 @keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-15deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}}
+@keyframes scooter{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-3px) rotate(-8deg)}75%{transform:translateX(3px) rotate(8deg)}}
+.delivery-banner-text::before{content:'🛵';display:inline-block;animation:scooter .8s ease infinite;margin-right:4px;}
 .nav-btn.has-notify .icon{animation:shake .6s ease infinite;display:inline-block;}
 .nav-btn{position:relative;flex:1;padding:12px 8px;background:none;border:none;color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .2s;}
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--accent);color:#fff;font-size:14px;font-weight:500;padding:12px 24px;border-radius:30px;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none;}
@@ -283,8 +285,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
 
     <!-- 운영시간 배너 -->
-    <div id="order-time-banner" style="display:none;"></div>
-    <div id="delivery-status-banner" style="display:none;"></div>
+    <div id="banner-wrap" style="grid-column:1/-1;">
+      <div id="order-time-banner" style="display:none;"></div>
+      <div id="delivery-status-banner" style="display:none;"></div>
+    </div>
 
     <!-- 왼쪽(PC) / 전체(모바일): 이름 + 메뉴 + 모바일용 옵션 -->
     <div class="pc-left">
@@ -680,8 +684,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
 
     <!-- 운영시간 배너 -->
-    <div id="order-time-banner-d" style="display:none;"></div>
-    <div id="delivery-status-banner-d" style="display:none;"></div>
+    <div id="banner-wrap-d" style="grid-column:1/-1;">
+      <div id="order-time-banner-d" style="display:none;"></div>
+      <div id="delivery-status-banner-d" style="display:none;"></div>
+    </div>
 
     <!-- 왼쪽(PC) / 전체(모바일): 이름 + 메뉴 + 모바일용 옵션 -->
     <div class="pc-left">
@@ -765,7 +771,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
 
     <!-- 오른쪽: PC 전용 -->
-    <div class="pc-right" style="display:none;">
+    <div class="pc-right" style="display:none;padding:0;overflow:hidden;">
+      <!-- 스크롤 영역 -->
+      <div style="flex:1;overflow-y:auto;padding:20px 18px 8px;display:flex;flex-direction:column;gap:8px;">
       <!-- 이름 -->
       <div class="name-section pc-only" style="margin-bottom:0;flex-shrink:0;">
         <label>이름</label>
@@ -836,7 +844,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div><div class="summary-name" id="delivery-sum-name-pc"></div><div class="summary-detail" id="delivery-sum-detail-pc"></div></div>
         </div>
       </div>
-      <button class="order-btn pc-only" id="delivery-btn-pc" onclick="placeDelivery()" disabled style="margin-top:auto;">메뉴를 선택해주세요</button>
+      </div>
+      <!-- 버튼 고정 -->
+      <div style="padding:0 18px 18px;flex-shrink:0;">
+        <button class="order-btn pc-only" id="delivery-btn-pc" onclick="placeDelivery()" disabled>메뉴를 선택해주세요</button>
+      </div>
     </div>
   </div>
 
@@ -1025,7 +1037,7 @@ function updateOrderTimeBanner() {
     el.style.borderBottom=`1px solid ${border}`; el.style.borderTop='none';
     el.style.borderLeft='none'; el.style.borderRight='none'; el.style.borderRadius='0';
     el.style.color=textColor; el.style.fontSize='12px'; el.style.fontWeight='700';
-    el.style.textAlign='center'; el.style.whiteSpace='nowrap'; el.style.margin='0'; el.style.lineHeight='1.4'; el.style.boxSizing='border-box'; el.style.height='32px';
+    el.style.textAlign='center'; el.style.whiteSpace='nowrap'; el.style.margin='0'; el.style.lineHeight='1.4'; el.style.height=''; el.style.boxSizing='';
   });
 }
 setInterval(updateOrderTimeBanner, 30000);
@@ -1703,15 +1715,14 @@ function updateDeliveryStatusBanner(){
   ['delivery-status-banner','delivery-status-banner-d'].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     if(isDelivering){
-      el.innerHTML='<span style="display:inline-block;animation:shake .8s ease infinite;line-height:1;">🛵</span> 바리스타님이 배달 중이에요! 잠시 기다려주세요 😊';
+      el.textContent='바리스타님이 배달 중이에요! 잠시 기다려주세요 😊';
+      el.className='delivery-banner-text';
       el.style.display='block';
-      el.style.padding='7px 28px'; el.style.background='rgba(139,92,246,.08)';
-      el.style.borderBottom='1px solid #c4b5fd'; el.style.borderTop='none';
-      el.style.borderLeft='none'; el.style.borderRight='none'; el.style.borderRadius='0';
-      el.style.color='#7c3aed'; el.style.fontSize='12px'; el.style.fontWeight='700';
-      el.style.textAlign='center'; el.style.whiteSpace='nowrap'; el.style.margin='0'; el.style.lineHeight='1.4'; el.style.boxSizing='border-box'; el.style.height='32px';
+      el.style.background='rgba(139,92,246,.08)';
+      el.style.borderBottom='1px solid #c4b5fd';
+      el.style.color='#7c3aed'; el.style.fontSize='12px'; el.style.fontWeight='700'; el.style.textAlign='center';
     } else {
-      el.style.display='none';
+      el.style.display='none'; el.className='';
     }
   });
 }
