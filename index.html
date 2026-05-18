@@ -70,7 +70,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   #page-history .page-header p,#page-admin .page-header p{margin:0 0 0 6px;font-size:12px;}
   #page-order{display:none!important;}
   #order-time-banner{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  #delivery-status-banner{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
   #order-time-banner-d{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  #delivery-status-banner-d{grid-column:1/-1;margin:0!important;border-radius:0!important;border-left:none!important;border-right:none!important;border-top:none!important;padding:6px 28px!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 }
 
 /* ── 헤더 ── */
@@ -166,6 +168,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .status-s1{background:rgba(59,130,246,.12);color:#2563eb;}
 .status-s2{background:rgba(16,185,129,.12);color:#059669;}
 .status-s3{background:rgba(239,68,68,.12);color:#ef4444;}
+.status-s4{background:rgba(139,92,246,.12);color:#7c3aed;}
 .cancel-btn{margin-top:5px;padding:3px 10px;background:rgba(239,68,68,.1);border:1px solid #fca5a5;border-radius:12px;color:#ef4444;font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:block;}
 
 /* ── 관리자 ── */
@@ -187,6 +190,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .status-btn{flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;background:var(--surface2);color:var(--text-muted);}
 .status-btn.confirm.active{background:rgba(245,158,11,.12);border-color:#f59e0b;color:#d97706;}
 .status-btn.making.active{background:rgba(59,130,246,.12);border-color:#3b82f6;color:#2563eb;}
+.status-btn.delivering.active{background:rgba(139,92,246,.12);border-color:#8b5cf6;color:#7c3aed;}
 .status-btn.done.active{background:rgba(16,185,129,.12);border-color:#10b981;color:#059669;}
 
 /* ── 공용컵 ── */
@@ -280,6 +284,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     <!-- 운영시간 배너 -->
     <div id="order-time-banner" style="display:none;"></div>
+    <div id="delivery-status-banner" style="display:none;"></div>
 
     <!-- 왼쪽(PC) / 전체(모바일): 이름 + 메뉴 + 모바일용 옵션 -->
     <div class="pc-left">
@@ -676,6 +681,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     <!-- 운영시간 배너 -->
     <div id="order-time-banner-d" style="display:none;"></div>
+    <div id="delivery-status-banner-d" style="display:none;"></div>
 
     <!-- 왼쪽(PC) / 전체(모바일): 이름 + 메뉴 + 모바일용 옵션 -->
     <div class="pc-left">
@@ -1019,7 +1025,7 @@ function updateOrderTimeBanner() {
     el.style.borderBottom=`1px solid ${border}`; el.style.borderTop='none';
     el.style.borderLeft='none'; el.style.borderRight='none'; el.style.borderRadius='0';
     el.style.color=textColor; el.style.fontSize='12px'; el.style.fontWeight='700';
-    el.style.textAlign='center'; el.style.whiteSpace='nowrap'; el.style.margin='0';
+    el.style.textAlign='center'; el.style.whiteSpace='nowrap'; el.style.margin='0'; el.style.lineHeight='1.4'; el.style.boxSizing='border-box'; el.style.height='32px';
   });
 }
 setInterval(updateOrderTimeBanner, 30000);
@@ -1671,6 +1677,10 @@ unsubscribe = onSnapshot(q,snapshot=>{
           showNotify('making','제조를 시작했어요! ☕',`${o.emoji} ${o.menu} 조금만 기다려주세요!`);
           sendBrowserNotify('☕ 제조 시작!', `${o.emoji} ${o.menu} 조금만 기다려주세요!`);
         }
+        if(prev!=='배달중'&&o.status==='배달중'&&o.name===user){
+          showNotify('making','배달을 시작했어요! 🛵',`${o.emoji} ${o.menu} 곧 도착해요!`);
+          sendBrowserNotify('🛵 배달 출발!', `${o.emoji} ${o.menu} 곧 도착해요!`);
+        }
         if(prev!=='완료'&&o.status==='완료'&&o.name===user){
           showNotify('complete','주문이 완료됐어요! 🎉',`${o.emoji} ${o.menu} 가져가세요!`);
           sendBrowserNotify('✅ 주문 완료!', `${o.emoji} ${o.menu} 가져가세요!`);
@@ -1683,12 +1693,30 @@ unsubscribe = onSnapshot(q,snapshot=>{
       prevStatuses[o.firestoreId]=o.status;
     });
   }
-  allOrders=newOrders;updateCupStock(allOrders);renderHistory();
+  allOrders=newOrders;updateCupStock(allOrders);renderHistory();updateDeliveryStatusBanner();
   if(document.getElementById('page-admin').classList.contains('active')&&document.getElementById('admin-dashboard').style.display==='block') renderAdmin();
 });
 
 // ── 상태 CSS ──
-function sCls(s){return s==='주문확인중'?'status-s0':s==='제조중'?'status-s1':s==='완료'?'status-s2':s==='취소'?'status-s3':'status-s0';}
+function updateDeliveryStatusBanner(){
+  const isDelivering = allOrders.some(o=>o.status==='배달중');
+  ['delivery-status-banner','delivery-status-banner-d'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    if(isDelivering){
+      el.innerHTML='<span style="display:inline-block;animation:shake .8s ease infinite;line-height:1;">🛵</span> 바리스타님이 배달 중이에요! 잠시 기다려주세요 😊';
+      el.style.display='block';
+      el.style.padding='7px 28px'; el.style.background='rgba(139,92,246,.08)';
+      el.style.borderBottom='1px solid #c4b5fd'; el.style.borderTop='none';
+      el.style.borderLeft='none'; el.style.borderRight='none'; el.style.borderRadius='0';
+      el.style.color='#7c3aed'; el.style.fontSize='12px'; el.style.fontWeight='700';
+      el.style.textAlign='center'; el.style.whiteSpace='nowrap'; el.style.margin='0'; el.style.lineHeight='1.4'; el.style.boxSizing='border-box'; el.style.height='32px';
+    } else {
+      el.style.display='none';
+    }
+  });
+}
+
+function sCls(s){return s==='주문확인중'?'status-s0':s==='제조중'?'status-s1':s==='배달중'?'status-s4':s==='완료'?'status-s2':s==='취소'?'status-s3':'status-s0';}
 
 // ── 주문내역 기간 필터 ──
 let historyFilter = 'all';
@@ -1941,6 +1969,7 @@ function renderAdmin(){
       ${o.status==='취소'?'':`<div class="status-toggle">
         <button class="status-btn confirm ${o.status==='주문확인중'?'active':''}" onclick="changeStatus('${o.firestoreId}','주문확인중')">📋 확인중</button>
         <button class="status-btn making ${o.status==='제조중'?'active':''}" onclick="changeStatus('${o.firestoreId}','제조중')">☕ 제조중</button>
+        ${o.delivery?`<button class="status-btn delivering ${o.status==='배달중'?'active':''}" onclick="changeStatus('${o.firestoreId}','배달중')">🛵 배달중</button>`:''}
         <button class="status-btn done ${o.status==='완료'?'active':''}" onclick="changeStatus('${o.firestoreId}','완료')">✅ 완료</button>
       </div>`}
     </div>`).join('');
