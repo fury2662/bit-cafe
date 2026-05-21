@@ -896,7 +896,10 @@ let currentUser  = localStorage.getItem('bitcafe_username') || '';
 window.setCupTotal = async function(val) {
   const n = Math.max(0, Math.min(100, parseInt(val) || 0));
   TOTAL_CUPS = n;
-  try { await setDoc(doc(db,'settings','totalCups'),{value:n}); } catch(e) {}
+  try {
+    await setDoc(doc(db,'settings','totalCups'),{value:n});
+    await setDoc(doc(db,'settings','originalTotalCups'),{value:n}); // 원래 총량 보존
+  } catch(e) {}
   document.getElementById('cup-total-input').value = n;
   const label = document.getElementById('cup-total-label');
   if (label) label.textContent = `초기 재고 ${n}개`;
@@ -1238,6 +1241,20 @@ window.returnCup=async function(){
   const used=allOrders.filter(o=>(o.cup||'').includes('공용')&&o.status!=='취소').length;
   let ret=0;
   try{const s=await getDoc(doc(db,'settings','cupReturned'));ret=parseInt(s.data()?.value||0);}catch(e){}
+  // 초기화 후엔 used=0이지만 TOTAL_CUPS가 줄어있으므로 원래 총량과 비교
+  const origTotal = 10; // 기준 최대값 (setCupTotal로 설정된 원래 값)
+  try{const s=await getDoc(doc(db,'settings','originalTotalCups'));
+    const orig=s.exists()?s.data().value:null;
+    if(orig!==null && TOTAL_CUPS < orig){
+      // 초기화 후 미회수 컵 회수 처리 → TOTAL_CUPS 직접 증가
+      const newTotal=Math.min(orig, TOTAL_CUPS+1);
+      await setDoc(doc(db,'settings','totalCups'),{value:newTotal});
+      TOTAL_CUPS=newTotal;
+      updateCupStock(allOrders);
+      showToast('✅ 컵 회수됐어요!');
+      return;
+    }
+  }catch(e){}
   if(ret>=used){showToast('⚠️ 회수할 컵이 없어요!','#f59e0b');return;}
   if(ret+1>TOTAL_CUPS){showToast('⚠️ 총 개수를 초과할 수 없어요!','#f59e0b');return;}
   try{await setDoc(doc(db,'settings','cupReturned'),{value:ret+1});}catch(e){}
@@ -1955,7 +1972,15 @@ window.clearAllOrders=async function(){
     try{await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',status:'완료',timestamp:o.timestamp||''});}catch(e){}
   }
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
-  try{await setDoc(doc(db,'settings','cupReturned'),{value:0});}catch(e){}
+  // 미회수 컵 수 계산 후 TOTAL_CUPS에서 차감
+  const usedCups = allOrders.filter(o=>(o.cup||'').includes('공용')&&o.status!=='취소').length;
+  let retSnap; try{ retSnap = await getDoc(doc(db,'settings','cupReturned')); }catch(e){}
+  const retCups = retSnap?.exists() ? (retSnap.data().value ?? 0) : 0;
+  const unreturned = Math.max(0, usedCups - retCups);
+  // 미회수 컵만큼 총 재고에서 차감 후 회수 카운트 초기화
+  const newTotal = Math.max(0, TOTAL_CUPS - unreturned);
+  try{ await setDoc(doc(db,'settings','totalCups'),{value:newTotal}); TOTAL_CUPS=newTotal; }catch(e){}
+  try{ await setDoc(doc(db,'settings','cupReturned'),{value:0}); }catch(e){}
   showToast('✅ 주문이 초기화됐어요.');
 };
 
