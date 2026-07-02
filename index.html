@@ -230,15 +230,23 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* ── 주문 메시지 ── */
 .order-msg-wrap{margin-top:8px;border-top:1px solid var(--border);padding-top:8px;}
-.order-msg-bubble{background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:12px;color:var(--text);line-height:1.5;position:relative;}
+.order-msg-bubble{background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:12px;color:var(--text);line-height:1.5;position:relative;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .order-msg-bubble::before{content:'💬';margin-right:5px;}
+.order-msg-bubble:hover{background:rgba(37,99,235,.12);}
 .order-msg-input-wrap{display:flex;gap:6px;margin-top:6px;}
 .order-msg-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:7px 14px;font-size:12px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;}
 .order-msg-input:focus{border-color:var(--accent);}
 .order-msg-send{padding:7px 14px;background:var(--accent);border:none;border-radius:20px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
 .order-msg-btn{margin-top:4px;padding:4px 10px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
-.admin-msg-bubble{background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:12px;color:var(--text);line-height:1.5;margin-top:8px;}
-.admin-msg-bubble::before{content:'💬 ';font-size:13px;}
+.admin-msg-bubble{background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:12px;color:var(--text);line-height:1.5;margin-top:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.admin-msg-bubble::before{content:'💬 ';}
+.admin-msg-bubble:hover{background:rgba(37,99,235,.12);}
+/* 메시지 팝업 */
+.msg-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.msg-popup{background:var(--surface);border-radius:16px;padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.msg-popup-title{font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:12px;}
+.msg-popup-text{font-size:14px;color:var(--text);line-height:1.7;word-break:break-all;white-space:pre-wrap;}
+.msg-popup-close{margin-top:16px;width:100%;padding:10px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
 .notify-panel{position:fixed;bottom:80px;right:16px;z-index:998;display:flex;flex-direction:column;gap:8px;max-width:280px;}
 .notify-card{background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 4px 20px rgba(37,99,235,.15);border-left:4px solid var(--accent);display:flex;gap:10px;align-items:flex-start;cursor:pointer;animation:slideIn .3s ease;transition:opacity .4s,transform .4s;}
 .notify-card.hiding{opacity:0;transform:translateX(30px);}
@@ -875,7 +883,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, getDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, increment, getDoc, setDoc, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyAphNv8Gz1Qb2O5jXhnV99hKawmiICR4hA",
@@ -1903,10 +1911,10 @@ function renderHistoryWithData(orders) {
           ${o.fromHistory||o.status==='완료'||o.status==='취소'?`<button onclick="deleteHistoryItem(${o.timestamp})" style="margin-top:4px;padding:2px 8px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗑 삭제</button>`:''}
         </div>
       </div>
-      ${o.message?`<div class="order-msg-wrap"><div class="order-msg-bubble">${o.message}</div></div>`:''}
+      ${o.messages&&o.messages.length?`<div class="order-msg-wrap">${o.messages.map(m=>`<div class="order-msg-bubble" onclick="showMsgPopup('${m.text.replace(/'/g,"\\'")}', '${o.menu}')" style="margin-bottom:4px;">${m.time} · ${m.text}</div>`).join('')}</div>`:''}
       <div id="msg-input-${o.firestoreId}" style="display:none;" class="order-msg-wrap">
         <div class="order-msg-input-wrap">
-          <input class="order-msg-input" id="msg-text-${o.firestoreId}" placeholder="해당 주문건에 대해 의견을 남겨 주세요." maxlength="100">
+          <input class="order-msg-input" id="msg-text-${o.firestoreId}" placeholder="해당 주문건에 대해 의견을 남겨 주세요.">
           <button class="order-msg-send" onclick="submitOrderMsg('${o.firestoreId}')">전송</button>
         </div>
       </div>
@@ -1919,6 +1927,18 @@ function renderHistory(){
 }
 
 // ── 주문 메시지 ──
+window.showMsgPopup = function(msg, title) {
+  const overlay = document.createElement('div');
+  overlay.className = 'msg-popup-overlay';
+  overlay.innerHTML = `
+    <div class="msg-popup">
+      <div class="msg-popup-title">💬 ${title}</div>
+      <div class="msg-popup-text">${msg}</div>
+      <button class="msg-popup-close" onclick="this.closest('.msg-popup-overlay').remove()">닫기</button>
+    </div>`;
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+};
 window.toggleMsgInput = function(fid) {
   const wrap = document.getElementById(`msg-input-${fid}`);
   if (!wrap) return;
@@ -1932,16 +1952,19 @@ window.submitOrderMsg = async function(fid) {
   const msg = input?.value?.trim();
   if (!msg) { showToast('메시지를 입력해주세요!', '#f59e0b'); return; }
   try {
-    await updateDoc(doc(db, 'orders', fid), { message: msg });
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    await updateDoc(doc(db, 'orders', fid), {
+      messages: arrayUnion({text: msg, time: timeStr})
+    });
     showToast('✅ 메시지가 전송됐어요!');
-    // 텔레그램 알림
     const o = allOrders.find(x => x.firestoreId === fid);
     const name = o ? o.name : '';
     const menu = o ? `${o.emoji||''} ${o.menu}` : '';
-    sendTelegramOnce(`msg_${fid}`, `💬 주문 메시지\n👤 ${name}님 · ${menu}\n📝 ${msg}`);
-    // 입력창 닫기
+    sendTelegramOnce(`msg_${fid}_${timeStr}`, `💬 주문 메시지\n👤 ${name}님 · ${menu}\n📝 ${msg}`);
     const wrap = document.getElementById(`msg-input-${fid}`);
     if (wrap) wrap.style.display = 'none';
+    if (input) input.value = '';
   } catch(e) { showToast('전송 실패: ' + e.message, '#ef4444'); }
 };
 
@@ -2051,7 +2074,7 @@ function renderAdmin(){
         </div>
         <span class="order-status ${sCls(o.status)}">${o.status}</span>
       </div>
-      ${o.message?`<div class="admin-msg-bubble">${o.message}</div>`:''}
+      ${o.messages&&o.messages.length?`<div>${o.messages.map(m=>`<div class="admin-msg-bubble" onclick="showMsgPopup('${m.text.replace(/'/g,"\\'")}', '${o.name}님 · ${o.menu}')" style="margin-bottom:4px;">${m.time} · ${m.text}</div>`).join('')}</div>`:''}
       ${o.status==='취소'?'':`<div class="status-toggle">
         <button class="status-btn confirm ${o.status==='주문확인중'?'active':''}" onclick="changeStatus('${o.firestoreId}','주문확인중')">📋 확인중</button>
         <button class="status-btn making ${o.status==='제조중'?'active':''}" onclick="changeStatus('${o.firestoreId}','제조중')">☕ 제조중</button>
