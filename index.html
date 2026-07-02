@@ -228,7 +228,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .date-shortcut.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .date-filter-bottom{display:flex;align-items:center;justify-content:space-between;}
 
-/* ── 알림 ── */
+/* ── 주문 메시지 ── */
+.order-msg-wrap{margin-top:8px;border-top:1px solid var(--border);padding-top:8px;}
+.order-msg-bubble{background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:12px;color:var(--text);line-height:1.5;position:relative;}
+.order-msg-bubble::before{content:'💬';margin-right:5px;}
+.order-msg-input-wrap{display:flex;gap:6px;margin-top:6px;}
+.order-msg-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:7px 14px;font-size:12px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;}
+.order-msg-input:focus{border-color:var(--accent);}
+.order-msg-send{padding:7px 14px;background:var(--accent);border:none;border-radius:20px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
+.order-msg-btn{margin-top:4px;padding:4px 10px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.admin-msg-bubble{background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:12px;color:var(--text);line-height:1.5;margin-top:8px;}
+.admin-msg-bubble::before{content:'💬 ';font-size:13px;}
 .notify-panel{position:fixed;bottom:80px;right:16px;z-index:998;display:flex;flex-direction:column;gap:8px;max-width:280px;}
 .notify-card{background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 4px 20px rgba(37,99,235,.15);border-left:4px solid var(--accent);display:flex;gap:10px;align-items:flex-start;cursor:pointer;animation:slideIn .3s ease;transition:opacity .4s,transform .4s;}
 .notify-card.hiding{opacity:0;transform:translateX(30px);}
@@ -1876,17 +1886,29 @@ function renderHistoryWithData(orders) {
   mine = applyHistoryFilter(mine);
   if(mine.length===0){list.innerHTML=`<div class="empty-state"><span class="big-icon">🫗</span><p>${user?'해당 기간 주문 내역이 없어요':'먼저 이름을 입력하고 주문해주세요!'}</p></div>`;return;}
   list.innerHTML=mine.map(o=>`
-    <div class="order-item">
-      <span class="order-item-emoji">${o.emoji||'☕'}</span>
-      <div class="order-item-info">
-        <div class="order-item-name">${o.menu}</div>
-        <div class="order-item-detail">${o.temp||''} · ${o.shot||''} · 당도:${o.sweet||''} · ${o.cup||''}${o.delivery?` · 🚚 ${o.location}`:''}</div>
+    <div class="order-item" style="flex-direction:column;align-items:stretch;">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <span class="order-item-emoji">${o.emoji||'☕'}</span>
+        <div class="order-item-info">
+          <div class="order-item-name">${o.menu}</div>
+          <div class="order-item-detail">${o.temp||''} · ${o.shot||''} · 당도:${o.sweet||''} · ${o.cup||''}${o.delivery?` · 🚚 ${o.location}`:''}</div>
+        </div>
+        <div class="order-item-right">
+          <span class="order-status ${sCls(o.status)}">${o.status}</span>
+          <div class="order-item-time">${o.date||''} ${o.time||''}</div>
+          <div style="display:flex;gap:4px;margin-top:4px;justify-content:flex-end;">
+            ${!o.fromHistory&&o.status==='주문확인중'?`<button class="cancel-btn" onclick="cancelOrder('${o.firestoreId}')">취소</button>`:''}
+            ${o.firestoreId?`<button class="order-msg-btn" onclick="toggleMsgInput('${o.firestoreId}')">💬 메시지</button>`:''}
+          </div>
+          ${o.fromHistory||o.status==='완료'||o.status==='취소'?`<button onclick="deleteHistoryItem(${o.timestamp})" style="margin-top:4px;padding:2px 8px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗑 삭제</button>`:''}
+        </div>
       </div>
-      <div class="order-item-right">
-        <span class="order-status ${sCls(o.status)}">${o.status}</span>
-        <div class="order-item-time">${o.date||''} ${o.time||''}</div>
-        ${!o.fromHistory&&o.status==='주문확인중'?`<button class="cancel-btn" onclick="cancelOrder('${o.firestoreId}')">취소</button>`:''}
-        ${o.fromHistory||o.status==='완료'||o.status==='취소'?`<button onclick="deleteHistoryItem(${o.timestamp})" style="margin-top:4px;padding:2px 8px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗑 삭제</button>`:''}
+      ${o.message?`<div class="order-msg-wrap"><div class="order-msg-bubble">${o.message}</div></div>`:''}
+      <div id="msg-input-${o.firestoreId}" style="display:none;" class="order-msg-wrap">
+        <div class="order-msg-input-wrap">
+          <input class="order-msg-input" id="msg-text-${o.firestoreId}" placeholder="해당 주문건에 대해 의견을 남겨 주세요." maxlength="100">
+          <button class="order-msg-send" onclick="submitOrderMsg('${o.firestoreId}')">전송</button>
+        </div>
       </div>
     </div>`).join('');
 }
@@ -1895,6 +1917,33 @@ function renderHistoryWithData(orders) {
 function renderHistory(){
   loadAndRenderHistory();
 }
+
+// ── 주문 메시지 ──
+window.toggleMsgInput = function(fid) {
+  const wrap = document.getElementById(`msg-input-${fid}`);
+  if (!wrap) return;
+  const isOpen = wrap.style.display !== 'none';
+  wrap.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) document.getElementById(`msg-text-${fid}`)?.focus();
+};
+
+window.submitOrderMsg = async function(fid) {
+  const input = document.getElementById(`msg-text-${fid}`);
+  const msg = input?.value?.trim();
+  if (!msg) { showToast('메시지를 입력해주세요!', '#f59e0b'); return; }
+  try {
+    await updateDoc(doc(db, 'orders', fid), { message: msg });
+    showToast('✅ 메시지가 전송됐어요!');
+    // 텔레그램 알림
+    const o = allOrders.find(x => x.firestoreId === fid);
+    const name = o ? o.name : '';
+    const menu = o ? `${o.emoji||''} ${o.menu}` : '';
+    sendTelegramOnce(`msg_${fid}`, `💬 주문 메시지\n👤 ${name}님 · ${menu}\n📝 ${msg}`);
+    // 입력창 닫기
+    const wrap = document.getElementById(`msg-input-${fid}`);
+    if (wrap) wrap.style.display = 'none';
+  } catch(e) { showToast('전송 실패: ' + e.message, '#ef4444'); }
+};
 
 // ── 취소 ──
 window.cancelOrder=async function(fid){
@@ -2002,6 +2051,7 @@ function renderAdmin(){
         </div>
         <span class="order-status ${sCls(o.status)}">${o.status}</span>
       </div>
+      ${o.message?`<div class="admin-msg-bubble">${o.message}</div>`:''}
       ${o.status==='취소'?'':`<div class="status-toggle">
         <button class="status-btn confirm ${o.status==='주문확인중'?'active':''}" onclick="changeStatus('${o.firestoreId}','주문확인중')">📋 확인중</button>
         <button class="status-btn making ${o.status==='제조중'?'active':''}" onclick="changeStatus('${o.firestoreId}','제조중')">☕ 제조중</button>
