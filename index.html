@@ -1093,7 +1093,7 @@ window.showPage = function(page) {
   document.getElementById('nav-'+page).classList.add('active');
   hideBadge(page);
   if (page==='admin') renderAdmin();
-  if (page==='history') loadAndRenderHistory();
+  if (page==='history') loadAndRenderHistory(true); // 탭 클릭시만 강제 재로드
   if (page==='message') {
     const saved = localStorage.getItem('bitcafe_username') || '';
     const el = document.getElementById('msg-name');
@@ -1740,11 +1740,18 @@ unsubscribe = onSnapshot(q,snapshot=>{
       prevStatuses[o.firestoreId]=o.status;
     });
   }
-  allOrders=newOrders;updateCupStock(allOrders);renderHistory();updateDeliveryStatusBanner();
-  if(document.getElementById('page-admin').classList.contains('active')&&document.getElementById('admin-dashboard').style.display==='block') renderAdmin();
+  allOrders=newOrders;updateCupStock(allOrders);debouncedRender();
 });
 
-// ── 상태 CSS ──
+let renderTimer = null;
+function debouncedRender() {
+  if (renderTimer) clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => {
+    renderHistory();
+    if(document.getElementById('page-admin').classList.contains('active')&&document.getElementById('admin-dashboard').style.display==='block') renderAdmin();
+    updateDeliveryStatusBanner();
+  }, 100);
+}
 function updateDeliveryStatusBanner(){
   const isDelivering = allOrders.some(o=>o.status==='배달중');
   ['delivery-status-banner','delivery-status-banner-d'].forEach(id=>{
@@ -1799,17 +1806,19 @@ window.applyHistoryDateFilter = function() {
 // ── 개인 주문내역 영구 보관 ──
 const historyCol = collection(db,'history');
 const deletedTimestamps = new Set();
+const savedHistoryTimestamps = new Set();
+
 async function saveToHistory(o) {
   try {
-    // 같은 timestamp가 이미 있으면 저장 안 함
-    const existing = await getDocs(query(historyCol, orderBy('timestamp','desc')));
-    if (existing.docs.some(d => d.data().timestamp === o.timestamp)) return;
+    if (savedHistoryTimestamps.has(o.timestamp)) return;
+    savedHistoryTimestamps.add(o.timestamp);
     await addDoc(historyCol, {
       name:o.name, menu:o.menu, emoji:o.emoji||'☕',
       temp:o.temp||'', shot:o.shot||'', sweet:o.sweet||'', cup:o.cup||'',
       delivery:o.delivery||false, location:o.location||'',
       status:o.status, time:o.time||'', date:o.date||'',
-      timestamp:o.timestamp||Date.now()
+      timestamp:o.timestamp||Date.now(),
+      messages:o.messages||[]
     });
   } catch(e) {}
 }
@@ -1841,25 +1850,17 @@ window.deleteHistoryItem = async function(timestamp) {
   }
 };
 
-async function loadAndRenderHistory() {
+let cachedHistoryDocs = null;
+
+async function loadAndRenderHistory(forceReload=false) {
   const user = localStorage.getItem('bitcafe_username')||'';
   if(!user){renderHistoryWithData(allOrders.filter(o=>!deletedTimestamps.has(o.timestamp)));return;}
   try {
-    const snap = await getDocs(historyCol);
-    // 중복 timestamp 자동 정리
-    const seen = new Map();
-    for (const d of snap.docs) {
-      const ts = d.data().timestamp;
-      if (seen.has(ts)) {
-        await deleteDoc(doc(db,'history',d.id)); // 중복 삭제
-      } else {
-        seen.set(ts, d.id);
-      }
+    if(!cachedHistoryDocs || forceReload) {
+      const snap = await getDocs(historyCol);
+      cachedHistoryDocs = snap.docs.map(d=>({...d.data(),_histId:d.id,fromHistory:true}));
     }
-    const histDocs = snap.docs
-      .filter(d => seen.get(d.data().timestamp) === d.id) // 살아남은 것만
-      .map(d=>({...d.data(),_histId:d.id,fromHistory:true}))
-      .filter(o=>o.name===user);
+    const histDocs = cachedHistoryDocs.filter(o=>o.name===user);
     const activeTs = new Set(allOrders.map(o=>o.timestamp));
     const newItems = histDocs.filter(o=>!activeTs.has(o.timestamp));
     const merged = [...allOrders,...newItems]
@@ -1961,7 +1962,8 @@ window.submitOrderMsg = async function(fid) {
     const o = allOrders.find(x => x.firestoreId === fid);
     const name = o ? o.name : '';
     const menu = o ? `${o.emoji||''} ${o.menu}` : '';
-    sendTelegramOnce(`msg_${fid}_${timeStr}`, `💬 주문 메시지\n👤 ${name}님 · ${menu}\n📝 ${msg}`);
+    const tgKey = `msg_${fid}_${Date.now()}`;
+    sendTelegramOnce(tgKey, `💬 주문 메시지\n👤 ${name}님 · ${menu}\n📝 ${msg}`);
     const wrap = document.getElementById(`msg-input-${fid}`);
     if (wrap) wrap.style.display = 'none';
     if (input) input.value = '';
