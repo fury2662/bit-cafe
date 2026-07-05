@@ -982,12 +982,24 @@ async function loadOrderTime() {
       }
     }
   } catch(e) {}
-  // UI 반영
+  // UI 반영 (한글 형식 → HH:MM 변환)
+  function toHHMM(t) {
+    if (!t) return null;
+    // 이미 HH:MM 형식이면 그대로
+    if (/^\d{2}:\d{2}$/.test(t)) return t;
+    // 오전/오후 HH:MM 형식 변환
+    const m = t.match(/([오전오후]+)\s*(\d+):(\d+)/);
+    if (!m) return null;
+    let h = parseInt(m[2]);
+    if (m[1].includes('오후') && h < 12) h += 12;
+    if (m[1].includes('오전') && h === 12) h = 0;
+    return `${String(h).padStart(2,'0')}:${m[3]}`;
+  }
   for(let i=1;i<=5;i++){
     const si=document.getElementById(`ot-${i}-s`);
     const ei=document.getElementById(`ot-${i}-e`);
-    if(si) si.value=dayTimes[i]?.s||'07:30';
-    if(ei) ei.value=dayTimes[i]?.e||'16:30';
+    if(si) si.value=toHHMM(dayTimes[i]?.s)||'07:30';
+    if(ei) ei.value=toHHMM(dayTimes[i]?.e)||'16:30';
   }
   updateOrderTimeBanner();
 }
@@ -2279,7 +2291,7 @@ window.saveMenuEdit = async function() {
   const emoji = document.getElementById('mf-emoji').value.trim();
   const type  = document.querySelector('.mf-type-btn[style*="accent"]')?.dataset.type || 'both';
   const noshot = document.getElementById('mf-noshot').checked;
-  const defaultShot = parseInt(document.getElementById('mf-defaultshot').value) || 2;
+  const defaultShot = parseInt(document.getElementById('mf-defaultshot').value) ?? 2;
   const editKey = document.getElementById('mf-editkey').value;
   if (!name)  { showToast('⚠️ 메뉴명을 입력해주세요','#f59e0b'); return; }
   if (!emoji) { showToast('⚠️ 이모지를 입력해주세요','#f59e0b'); return; }
