@@ -573,6 +573,15 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
             <input type="checkbox" id="mf-noshot" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);">
             <label for="mf-noshot" style="font-size:13px;font-weight:600;color:var(--text);cursor:pointer;">샷 추가 불가 메뉴</label>
           </div>
+          <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+            <label style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;">기본 샷</label>
+            <select id="mf-defaultshot" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;">
+              <option value="0">0샷</option>
+              <option value="1">1샷</option>
+              <option value="2" selected>2샷</option>
+              <option value="3">3샷</option>
+            </select>
+          </div>
           <input type="hidden" id="mf-editkey">
           <div style="display:flex;gap:8px;">
             <button class="order-btn" onclick="saveMenuEdit()" style="flex:1;padding:10px;font-size:13px;">💾 저장</button>
@@ -1072,14 +1081,15 @@ function updateShotDisabled(menuName, isDelivery) {
   const allMenus = getCurrentMenus();
   const menuData = allMenus.find(m=>m.name===menuName);
   const disabled = NOSHOT_MENUS.includes(menuName) || (menuData && menuData.noshot);
+  const defaultShot = disabled ? '0샷' : `${menuData?.defaultShot ?? 2}샷`;
   if (isDelivery) {
     const s1 = document.getElementById('dshot-select');
     const s2 = document.getElementById('dshot-select-pc');
-    [s1,s2].forEach(s=>{ if(!s)return; s.disabled=disabled; s.value=disabled?'0샷':'2샷'; });
+    [s1,s2].forEach(s=>{ if(!s)return; s.disabled=disabled; s.value=defaultShot; });
   } else {
     const s1 = document.getElementById('shot-select');
     const s2 = document.getElementById('shot-select-pc');
-    [s1,s2].forEach(s=>{ if(!s)return; s.disabled=disabled; s.value=disabled?'0샷':'2샷'; });
+    [s1,s2].forEach(s=>{ if(!s)return; s.disabled=disabled; s.value=defaultShot; });
   }
 }
 
@@ -2241,6 +2251,7 @@ window.startMenuEdit = function(key) {
     b.style.color       = active?'var(--accent)':'var(--text-muted)';
   });
   document.getElementById('mf-noshot').checked = m.noshot||false;
+  document.getElementById('mf-defaultshot').value = m.defaultShot ?? 2;
   document.getElementById('mf-name').focus();
 };
 
@@ -2249,6 +2260,7 @@ window.cancelMenuEdit = function() {
   document.getElementById('mf-name').value='';
   document.getElementById('mf-emoji').value='☕';
   document.getElementById('mf-noshot').checked=false;
+  document.getElementById('mf-defaultshot').value=2;
   document.getElementById('mf-emoji-display').textContent='☕';
   document.getElementById('emoji-picker').style.display='none';
   document.getElementById('mf-editkey').value='';
@@ -2267,6 +2279,7 @@ window.saveMenuEdit = async function() {
   const emoji = document.getElementById('mf-emoji').value.trim();
   const type  = document.querySelector('.mf-type-btn[style*="accent"]')?.dataset.type || 'both';
   const noshot = document.getElementById('mf-noshot').checked;
+  const defaultShot = parseInt(document.getElementById('mf-defaultshot').value) || 2;
   const editKey = document.getElementById('mf-editkey').value;
   if (!name)  { showToast('⚠️ 메뉴명을 입력해주세요','#f59e0b'); return; }
   if (!emoji) { showToast('⚠️ 이모지를 입력해주세요','#f59e0b'); return; }
@@ -2288,12 +2301,12 @@ window.saveMenuEdit = async function() {
   try {
     if (editKey && dbMenus.find(x=>x._id===editKey)) {
       // 수정
-      await updateDoc(doc(db,'menus',editKey), { name, emoji, type, noshot });
+      await updateDoc(doc(db,'menus',editKey), { name, emoji, type, noshot, defaultShot });
       showToast('✅ 메뉴가 수정됐어요!');
     } else {
       // 추가
       const maxOrder = Math.max(0, ...getCurrentMenus().map(m=>m.order||0)) + 1;
-      await addDoc(menusCol, { name, emoji, type, order: maxOrder, noshot });
+      await addDoc(menusCol, { name, emoji, type, order: maxOrder, noshot, defaultShot });
       showToast('✅ 메뉴가 추가됐어요!');
     }
     cancelMenuEdit();
