@@ -2056,9 +2056,15 @@ window.clearAllOrders=async function(){
   // 모든 주문 history에 백업
   // 이미 history에 있는 timestamp 목록
   const existSnap = await getDocs(historyCol);
-  const existTs = new Set(existSnap.docs.map(d=>d.data().timestamp));
-  // history에 없는 항목만 저장 (중복 방지)
-  for(const o of allOrders){ if(!existTs.has(o.timestamp)) await saveToHistory(o); }
+  const existTs = new Map(existSnap.docs.map(d=>[d.data().timestamp, d.id]));
+  for(const o of allOrders){
+    if(!existTs.has(o.timestamp)){
+      await saveToHistory(o);
+    } else if(o.messages&&o.messages.length){
+      // 이미 history에 있지만 messages가 있으면 업데이트
+      try{ await updateDoc(doc(db,'history',existTs.get(o.timestamp)),{messages:o.messages}); }catch(e){}
+    }
+  }
   // 완료 주문만 stats에 백업 (중복 방지)
   const statsCol = collection(db,'stats');
   const statsSnap = await getDocs(statsCol);
