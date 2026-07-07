@@ -474,6 +474,13 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
       <h1>관리자</h1>
       <p>전체 주문 현황</p>
     </div>
+    <div id="tg-session-screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:20px;padding:40px;text-align:center;">
+      <div style="font-size:64px;">📡</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);">텔레그램 메시지 전송 중</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.8;">새 주문 및 취소 알림이<br>자동으로 전송됩니다.</div>
+      <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;animation:pulse 2s ease infinite;margin-top:10px;"></div>
+      <button onclick="window.adminLogout()" style="margin-top:20px;padding:8px 20px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">종료</button>
+    </div>
     <div id="admin-login">
       <div class="name-section" style="margin-bottom:12px;">
         <label>비밀번호</label>
@@ -910,7 +917,9 @@ const stockCol  = collection(db,'stock'); // 메뉴별 재고
 
 const ADMIN_PW       = '1234';
 const ADMIN_PW_SUPER = '9876';
+const ADMIN_PW_TG    = '5555';
 let isSuper = false;
+let isTgSession = false;
 let isAdminLoggedIn = false;
 let TOTAL_CUPS = 10;
 let selectedMenu = null;
@@ -1711,7 +1720,7 @@ unsubscribe = onSnapshot(q,snapshot=>{
   const newOrders=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));
   if(isFirstLoad){newOrders.forEach(o=>{prevStatuses[o.firestoreId]=o.status;});isFirstLoad=false;}
   else{
-    const isAdmin=isSuper;
+    const isAdmin=isTgSession;
     const user=localStorage.getItem('bitcafe_username')||'';
     snapshot.docChanges().forEach(change=>{
       const o={firestoreId:change.doc.id,...change.doc.data()};
@@ -2004,19 +2013,24 @@ window.cancelOrder=async function(fid){
 // ── 관리자 로그인 ──
 window.adminLogin=function(){
   const pw=document.getElementById('admin-pw').value;
+  if(pw===ADMIN_PW_TG){
+    isTgSession=true;
+    document.getElementById('admin-login').style.display='none';
+    document.getElementById('tg-session-screen').style.display='flex';
+    return;
+  }
   if(pw===ADMIN_PW || pw===ADMIN_PW_SUPER){
     isAdminLoggedIn = true;
     isSuper = pw===ADMIN_PW_SUPER;
+    isTgSession = false;
     document.getElementById('admin-login').style.display='none';
     document.getElementById('admin-dashboard').style.display='block';
-    // 통계/재고/메뉴 탭 표시 여부
     const statsTab=document.querySelector('.admin-tab[onclick*="stats"]');
     const stockTab=document.querySelector('.admin-tab[onclick*="stock"]');
     const menusTab=document.querySelector('.admin-tab[onclick*="menus"]');
     if(statsTab) statsTab.style.display=isSuper?'':'none';
     if(stockTab) stockTab.style.display=isSuper?'':'none';
     if(menusTab) menusTab.style.display=isSuper?'':'none';
-    // 총 개수 입력칸 초기화
     const inp=document.getElementById('cup-total-input');
     if(inp) inp.value=TOTAL_CUPS;
     const lbl=document.getElementById('cup-total-label');
@@ -2030,8 +2044,11 @@ window.adminLogin=function(){
 document.getElementById('admin-pw').addEventListener('keydown',e=>{if(e.key==='Enter')window.adminLogin();});
 window.adminLogout=function(){
   isSuper=false;
+  isTgSession=false;
+  isAdminLoggedIn=false;
   document.getElementById('admin-login').style.display='block';
   document.getElementById('admin-dashboard').style.display='none';
+  document.getElementById('tg-session-screen').style.display='none';
   document.getElementById('admin-pw').value='';
 };
 window.switchAdminTab=function(btn,tab){
