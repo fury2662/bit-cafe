@@ -2091,12 +2091,12 @@ window.clearAllOrders=async function(){
     if(statsKeys.has(key)) continue;
     try{await addDoc(statsCol,{menu:o.menu,emoji:o.emoji||'☕',cup:o.cup||'',time:o.time||'',temp:o.temp||'',date:o.date||'',status:'완료',timestamp:o.timestamp||''});}catch(e){}
   }
-  for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
-  // 미회수 컵 수 계산 후 TOTAL_CUPS에서 차감
+  // 미회수 컵 수를 삭제 전에 먼저 계산 (삭제 후엔 allOrders가 비어버림)
   const usedCups = allOrders.filter(o=>(o.cup||'').includes('공용')&&o.status!=='취소').length;
   let retSnap; try{ retSnap = await getDoc(doc(db,'settings','cupReturned')); }catch(e){}
   const retCups = retSnap?.exists() ? (retSnap.data().value ?? 0) : 0;
   const unreturned = Math.max(0, usedCups - retCups);
+  for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
   // 미회수 컵만큼 총 재고에서 차감 후 회수 카운트 초기화
   const newTotal = Math.max(0, TOTAL_CUPS - unreturned);
   try{ await setDoc(doc(db,'settings','totalCups'),{value:newTotal}); TOTAL_CUPS=newTotal; }catch(e){}
