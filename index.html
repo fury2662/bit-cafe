@@ -89,6 +89,13 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .name-section input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--cream);font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:7px 11px;outline:none;}
 .name-section input:focus{border-color:var(--accent);}
 .name-section input::placeholder{color:var(--text-muted);}
+/* ── 내 메뉴 (즐겨찾기) ── */
+.fav-menu-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.fav-menu-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;color:#d97706;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.fav-menu-btn:hover{background:rgba(245,158,11,.15);}
+.fav-menu-del{margin-left:2px;font-size:10px;color:var(--text-muted);cursor:pointer;padding:0 2px;}
+.fav-menu-del:hover{color:#ef4444;}
+.fav-star-btn{margin-top:4px;padding:2px 8px;background:none;border:1px solid rgba(245,158,11,.5);border-radius:10px;color:#d97706;font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
 
 /* ── 섹션 타이틀 ── */
 .section-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
@@ -313,10 +320,11 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <div class="pc-left">
 
       <!-- 이름 (모바일) -->
-      <div class="name-section mob-only" style="margin-bottom:16px;">
+      <div class="name-section mob-only" style="margin-bottom:8px;">
         <label>이름</label>
         <input type="text" id="username" placeholder="이름을 입력해주세요" maxlength="20">
       </div>
+      <div class="fav-menu-wrap mob-only" id="fav-menu-list"></div>
 
       <!-- 메뉴 -->
       <p class="section-title">HOT · ICE 선택 가능</p>
@@ -388,6 +396,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
         <label>이름</label>
         <input type="text" id="username-pc" placeholder="이름을 입력해주세요" maxlength="20">
       </div>
+      <div class="fav-menu-wrap pc-only" id="fav-menu-list-pc" style="margin-bottom:0;flex-shrink:0;"></div>
       <div class="option-panel pc-only" id="option-panel-pc" style="margin-bottom:0;flex-shrink:0;">
         <h3 id="option-title-pc"></h3>
         <div class="option-row" id="row-temp-pc" style="display:none;">
@@ -1148,11 +1157,16 @@ function syncName(val) {
   ['username','username-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=val;});
   currentUser=val; localStorage.setItem('bitcafe_username',val);
 }
+let favLoadTimer=null;
 ['username','username-pc'].forEach(id=>{
   const el=document.getElementById(id);
-  if(el) el.addEventListener('input',()=>{syncName(el.value);updateSummary();});
+  if(el) el.addEventListener('input',()=>{syncName(el.value);updateSummary();
+    if(favLoadTimer)clearTimeout(favLoadTimer);
+    favLoadTimer=setTimeout(loadFavorites,800); // 입력 멈춘 뒤 1회만 로드
+  });
 });
 if(currentUser) ['username','username-pc'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=currentUser;});
+setTimeout(loadFavorites, 500); // 초기 로드
 
 // ── 메뉴 빌드 ──
 const MENUS={
@@ -1309,6 +1323,82 @@ window.returnCup=async function(){
   if(ret+1>TOTAL_CUPS){showToast('⚠️ 총 개수를 초과할 수 없어요!','#f59e0b');return;}
   try{await setDoc(doc(db,'settings','cupReturned'),{value:ret+1});}catch(e){}
   updateCupStock(allOrders);
+};
+
+// ── 내 메뉴 (즐겨찾기) ──
+let myFavorites = [];
+
+async function loadFavorites() {
+  const user = localStorage.getItem('bitcafe_username')||'';
+  if(!user){ myFavorites=[]; renderFavButtons(); return; }
+  try{
+    const snap = await getDoc(doc(db,'favorites',user));
+    myFavorites = snap.exists() ? (snap.data().items||[]) : [];
+  }catch(e){ myFavorites=[]; }
+  renderFavButtons();
+}
+
+function renderFavButtons() {
+  ['fav-menu-list','fav-menu-list-pc'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.innerHTML = myFavorites.map((f,i)=>
+      `<span class="fav-menu-btn" onclick="orderFavorite(${i})">⭐ ${f.label}<span class="fav-menu-del" onclick="event.stopPropagation();deleteFavorite(${i})">✕</span></span>`
+    ).join('');
+  });
+}
+
+window.saveFavorite = async function(ts) {
+  const user = localStorage.getItem('bitcafe_username')||'';
+  if(!user){ showToast('먼저 이름을 입력해주세요!','#f59e0b'); return; }
+  if(myFavorites.length>=3){ showToast('⚠️ 내 메뉴는 최대 3개까지예요! 기존 메뉴를 삭제해주세요.','#f59e0b'); return; }
+  const o = (window._histOrders||[]).find(x=>x.timestamp===ts);
+  if(!o){ showToast('주문 정보를 찾을 수 없어요','#ef4444'); return; }
+  const label = prompt('내 메뉴 이름을 입력해주세요', o.menu);
+  if(!label||!label.trim()) return;
+  myFavorites.push({label:label.trim(), menu:o.menu, emoji:o.emoji||'☕', temp:o.temp||'', shot:o.shot||'2샷', sweet:o.sweet||'보통', cup:o.cup||'♻️ 개인컵'});
+  try{
+    await setDoc(doc(db,'favorites',user),{items:myFavorites});
+    renderFavButtons();
+    showToast(`⭐ '${label.trim()}' 내 메뉴에 저장됐어요!`);
+  }catch(e){ myFavorites.pop(); showToast('저장 실패:'+e.message,'#ef4444'); }
+};
+
+window.deleteFavorite = async function(idx) {
+  const user = localStorage.getItem('bitcafe_username')||'';
+  if(!user) return;
+  if(!confirm(`'${myFavorites[idx].label}' 내 메뉴를 삭제할까요?`)) return;
+  const backup=[...myFavorites];
+  myFavorites.splice(idx,1);
+  try{
+    await setDoc(doc(db,'favorites',user),{items:myFavorites});
+    renderFavButtons();
+    showToast('🗑 삭제됐어요');
+  }catch(e){ myFavorites=backup; showToast('삭제 실패:'+e.message,'#ef4444'); }
+};
+
+window.orderFavorite = async function(idx) {
+  const f = myFavorites[idx]; if(!f) return;
+  const name = localStorage.getItem('bitcafe_username')||'';
+  if(!name){ showToast('먼저 이름을 입력해주세요!','#f59e0b'); return; }
+  if(!confirm(`⭐ ${f.label}\n${f.menu} · ${f.temp} · ${f.shot} · 당도:${f.sweet} · ${f.cup}\n\n주문하시겠습니까?`)) return;
+  if(!isOrderTimeAvailable()){showToast(getUnavailableReason(),'#ef4444');return;}
+  const pending=allOrders.filter(o=>o.status==='주문확인중'||o.status==='제조중').length;
+  if(pending>=5){showToast('⚠️ 주문이 밀려있어요! 잠시 후 다시 시도해주세요','#ef4444');return;}
+  if((f.cup||'').includes('공용')){
+    const used=allOrders.filter(o=>(o.cup||'').includes('공용')).length;
+    let ret=0; try{const s=await getDoc(doc(db,'settings','cupReturned'));ret=parseInt(s.data()?.value||0);}catch(e){}
+    const rem=Math.max(0,TOTAL_CUPS-Math.max(0,used-ret));
+    if(rem<=0){showToast('⚠️ 공용컵 재고가 없어요! 개인컵을 이용해주세요','#ef4444');return;}
+  }
+  const stockOk = await checkStock(f.menu);
+  if(!stockOk){ showToast(`⛔ ${f.menu} 재고가 없어요!`,'#ef4444'); return; }
+  try{
+    await addDoc(ordersCol,{name,menu:f.menu,emoji:f.emoji,temp:f.temp,shot:f.shot,sweet:f.sweet,cup:f.cup,
+      time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
+      date:getLocalDate(),timestamp:Date.now(),status:'주문확인중'});
+    await decrementStock(f.menu);
+    showToast(`✅ ${name}님, '${f.label}' 주문 완료!`);
+  }catch(e){ alert('주문 실패:'+e.message); }
 };
 
 // ── 텔레그램 알림 ──
@@ -1926,6 +2016,7 @@ function renderHistoryWithData(orders) {
   let mine=orders.filter(o=>o.name===user);
   mine = applyHistoryFilter(mine);
   if(mine.length===0){list.innerHTML=`<div class="empty-state"><span class="big-icon">🫗</span><p>${user?'해당 기간 주문 내역이 없어요':'먼저 이름을 입력하고 주문해주세요!'}</p></div>`;return;}
+  window._histOrders = mine;
   list.innerHTML=mine.map(o=>`
     <div class="order-item" style="flex-direction:column;align-items:stretch;">
       <div style="display:flex;align-items:flex-start;gap:10px;">
@@ -1940,6 +2031,7 @@ function renderHistoryWithData(orders) {
           <div style="display:flex;gap:4px;margin-top:4px;justify-content:flex-end;">
             ${!o.fromHistory&&o.status==='주문확인중'?`<button class="cancel-btn" onclick="cancelOrder('${o.firestoreId}')">취소</button>`:''}
             ${o.firestoreId?`<button class="order-msg-btn" onclick="toggleMsgInput('${o.firestoreId}')">💬 메시지</button>`:''}
+            ${o.delivery?'':`<button class="fav-star-btn" onclick="saveFavorite(${o.timestamp})">⭐ 내 메뉴</button>`}
           </div>
           ${o.fromHistory||o.status==='완료'||o.status==='취소'?`<button onclick="deleteHistoryItem(${o.timestamp})" style="margin-top:4px;padding:2px 8px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🗑 삭제</button>`:''}
         </div>
@@ -2098,6 +2190,11 @@ window.clearAllOrders=async function(){
   const unreturned = Math.max(0, usedCups - retCups);
   for(const o of allOrders){try{await deleteDoc(doc(db,'orders',o.firestoreId));}catch(e){}}
   // 미회수 컵만큼 총 재고에서 차감 후 회수 카운트 초기화
+  // 차감 전 원래 총량 보존 (originalTotalCups 없으면 현재값으로 생성)
+  try{
+    const origSnap = await getDoc(doc(db,'settings','originalTotalCups'));
+    if(!origSnap.exists()) await setDoc(doc(db,'settings','originalTotalCups'),{value:TOTAL_CUPS});
+  }catch(e){}
   const newTotal = Math.max(0, TOTAL_CUPS - unreturned);
   try{ await setDoc(doc(db,'settings','totalCups'),{value:newTotal}); TOTAL_CUPS=newTotal; }catch(e){}
   try{ await setDoc(doc(db,'settings','cupReturned'),{value:0}); }catch(e){}
