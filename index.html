@@ -1934,7 +1934,9 @@ async function saveToHistory(o) {
   try {
     if (savedHistoryTimestamps.has(o.timestamp)) return;
     savedHistoryTimestamps.add(o.timestamp);
-    await addDoc(historyCol, {
+    // 문서 ID를 timestamp 기반으로 고정 → 여러 탭이 동시에 저장해도 중복 없음
+    const docId = `${o.timestamp||Date.now()}_${(o.name||'').replace(/[\/\s]/g,'')}`;
+    await setDoc(doc(db,'history',docId), {
       name:o.name, menu:o.menu, emoji:o.emoji||'☕',
       temp:o.temp||'', shot:o.shot||'', sweet:o.sweet||'', cup:o.cup||'',
       delivery:o.delivery||false, location:o.location||'',
@@ -1959,10 +1961,10 @@ window.deleteHistoryItem = async function(timestamp) {
     if(inOrders && inOrders.firestoreId){
       await deleteDoc(doc(db,'orders',inOrders.firestoreId));
     }
-    // history 컬렉션에도 있으면 삭제
+    // history 컬렉션에도 있으면 삭제 (중복 저장된 것도 전부)
     const snap = await getDocs(historyCol);
     for(const d of snap.docs) {
-      if(d.data().timestamp===timestamp){await deleteDoc(doc(db,'history',d.id));break;}
+      if(d.data().timestamp===timestamp){await deleteDoc(doc(db,'history',d.id));}
     }
     showToast('🗑 주문 내역이 삭제됐어요.');
   } catch(e) {
@@ -1988,7 +1990,10 @@ async function loadAndRenderHistory(forceReload=false) {
     const merged = [...allOrders,...newItems]
       .filter(o=>!deletedTimestamps.has(o.timestamp))
       .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-    renderHistoryWithData(merged);
+    // 같은 timestamp 중복 제거 (기존 중복 저장 데이터 대응)
+    const seenTs = new Set();
+    const deduped = merged.filter(o=>{ if(seenTs.has(o.timestamp)) return false; seenTs.add(o.timestamp); return true; });
+    renderHistoryWithData(deduped);
   } catch(e) { renderHistoryWithData(allOrders.filter(o=>!deletedTimestamps.has(o.timestamp))); }
 }
 
